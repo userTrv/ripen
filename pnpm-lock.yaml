@@ -8,9 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@ripen/cli':
+        specifier: workspace:*
+        version: link:packages/cli
       '@ripen/core':
         specifier: workspace:*
         version: link:packages/core
+      '@ripen/sdk':
+        specifier: workspace:*
+        version: link:packages/sdk-js
       '@ripen/server':
         specifier: workspace:*
         version: link:packages/server
@@ -20,6 +26,8 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
+
+  packages/cli: {}
 
   packages/core: {}
 

@@ -12,6 +12,9 @@
     },
     {
       "path": "packages/elements"
+    },
+    {
+      "path": "packages/cli"
     }
   ]
 }

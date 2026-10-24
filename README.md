@@ -53,16 +53,18 @@ await ripen.report('Search returns nothing for quoted phrases', { feature: 'sear
 ### In CI or by hand
 
 ```bash
-api() { curl -s -H "Authorization: Bearer $RIPEN_ADMIN_TOKEN" -H 'Content-Type: application/json' "$@"; }
+export RIPEN_URL=https://ripen.example.com
+export RIPEN_ADMIN_TOKEN=...            # from your CI secrets, never as an argument
 
-api -X PUT  localhost:4747/v1/admin/features/new-editor -d '{"description":"Rewritten editor"}'
-api -X POST localhost:4747/v1/admin/features/new-editor/promote     # off → early
-api         localhost:4747/v1/admin/features/new-editor/health      # metrics and gate checks
-api -X POST localhost:4747/v1/admin/features/new-editor/promote     # early → regular, if the gate passes
-api -X POST localhost:4747/v1/admin/features/new-editor/rollback -d '{"to":"off"}'   # kill switch
+ripen create new-editor --description "Rewritten editor"
+ripen promote new-editor                # off → early
+ripen health new-editor                 # metrics and gate checks; exit 1 while the gate fails
+ripen promote new-editor                # early → regular, only if the gate passes
+ripen rollback new-editor --to off      # kill switch
+ripen history new-editor --json
 ```
 
-Theming: CSS custom properties `--ripen-accent`, `--ripen-on-accent`, `--ripen-border`, `--ripen-radius`, `--ripen-muted`, `--ripen-text`, and `::part()` for `title`, `option`, `option-current`, `notice`, `button`, `button-primary`, `button-works`, `button-broken`, `textarea`, `status`. Events: `ripen-channel-change` and `ripen-feedback`.
+A nightly CI job can promote everything that is ready: `ripen promote <key>` exits 1 and prints the failed checks when a feature is not ready, so the job can loop over keys and ignore those. Every command also has `--json` output. The same operations are available over the [admin HTTP API](docs/spec.md#admin-api).
 
 ## Packages
 
@@ -71,6 +73,7 @@ Theming: CSS custom properties `--ripen-accent`, `--ripen-on-accent`, `--ripen-b
 | [`@ripen/core`](packages/core) | Domain model: channels, contract, gates. Pure TypeScript, no I/O |
 | [`@ripen/server`](packages/server) | HTTP server on `node:http` and `node:sqlite` |
 | [`@ripen/sdk`](packages/sdk-js) | JavaScript SDK for browsers and Node.js |
+| [`@ripen/cli`](packages/cli) | `ripen` command for CI and terminals |
 | [`@ripen/elements`](packages/elements) | Web components: `<ripen-channel-picker>` with the consent step, `<ripen-feedback>` with pulse and report form |
 
 ## Development
@@ -92,7 +95,8 @@ Design decisions are recorded in [docs/adr](docs/adr). The background research (
 - [x] Spec, ADRs, core model, server, JavaScript SDK
 - [x] Web components: channel picker, pulse and report form
 - [ ] OpenFeature provider, to work alongside existing flag systems
-- [ ] CLI and GitHub Action for promotion in CI
+- [x] CLI for promotion in CI
+- [ ] GitHub Action
 - [ ] Dashboard (Angular)
 - [ ] Docker image, in-browser demo
 - [ ] Flutter SDK, adapters for desktop updaters

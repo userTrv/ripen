@@ -1,0 +1,20 @@
+{
+  "name": "@ripen/cli",
+  "version": "0.1.0",
+  "description": "Ripen command-line tool: create, promote and roll back features from CI or a terminal.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "ripen": "./dist/main.js"
+  },
+  "exports": {
+    ".": {
+      "ripen-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ]
+}

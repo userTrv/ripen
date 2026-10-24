@@ -9,13 +9,15 @@
   "scripts": {
     "test": "node --conditions=ripen-source --disable-warning=ExperimentalWarning --test \"packages/*/test/**/*.test.ts\"",
     "typecheck": "tsc -b",
-    "build": "pnpm clean && tsc -b packages/core packages/server packages/sdk-js packages/elements",
+    "build": "pnpm clean && tsc -b packages/core packages/server packages/sdk-js packages/elements packages/cli",
     "dev:server": "node --conditions=ripen-source --disable-warning=ExperimentalWarning packages/server/src/main.ts",
     "clean": "rm -rf packages/*/dist packages/*/tsconfig.tsbuildinfo",
     "test:browser": "pnpm build && node --conditions=ripen-source --disable-warning=ExperimentalWarning scripts/browser-test.ts"
   },
   "devDependencies": {
+    "@ripen/cli": "workspace:*",
     "@ripen/core": "workspace:*",
+    "@ripen/sdk": "workspace:*",
     "@ripen/server": "workspace:*",
     "@types/node": "24.19.2",
     "typescript": "7.0.2"
