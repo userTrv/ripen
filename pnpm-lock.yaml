@@ -8,6 +8,12 @@ importers:
 
   .:
     devDependencies:
+      '@ripen/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@ripen/server':
+        specifier: workspace:*
+        version: link:packages/server
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
@@ -16,6 +22,12 @@ importers:
         version: 7.0.2
 
   packages/core: {}
+
+  packages/elements:
+    devDependencies:
+      '@ripen/sdk':
+        specifier: workspace:*
+        version: link:../sdk-js
 
   packages/sdk-js: {}
 

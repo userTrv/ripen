@@ -37,6 +37,14 @@ if (ripen.isEnabled('new-editor')) showNewEditor();
 await ripen.setChannel('early', { consent: true });
 ripen.captureUncaughtErrors();
 
+// Or use the ready-made web components (any framework, Shadow DOM, themable):
+import { defineRipenElements, RU } from '@ripen/elements';
+defineRipenElements();
+const picker = document.querySelector('ripen-channel-picker');   // <ripen-channel-picker>
+picker.ripen = ripen;
+picker.texts = RU;                                                // English by default
+document.querySelector('ripen-feedback').ripen = ripen;          // <ripen-feedback feature="search-v2">
+
 // After an update, ask once:
 await ripen.pulse('ok');
 await ripen.report('Search returns nothing for quoted phrases', { feature: 'search-v2' });
@@ -54,6 +62,8 @@ api -X POST localhost:4747/v1/admin/features/new-editor/promote     # early → 
 api -X POST localhost:4747/v1/admin/features/new-editor/rollback -d '{"to":"off"}'   # kill switch
 ```
 
+Theming: CSS custom properties `--ripen-accent`, `--ripen-on-accent`, `--ripen-border`, `--ripen-radius`, `--ripen-muted`, `--ripen-text`, and `::part()` for `title`, `option`, `option-current`, `notice`, `button`, `button-primary`, `button-works`, `button-broken`, `textarea`, `status`. Events: `ripen-channel-change` and `ripen-feedback`.
+
 ## Packages
 
 | Package | What it is |
@@ -61,6 +71,7 @@ api -X POST localhost:4747/v1/admin/features/new-editor/rollback -d '{"to":"off"
 | [`@ripen/core`](packages/core) | Domain model: channels, contract, gates. Pure TypeScript, no I/O |
 | [`@ripen/server`](packages/server) | HTTP server on `node:http` and `node:sqlite` |
 | [`@ripen/sdk`](packages/sdk-js) | JavaScript SDK for browsers and Node.js |
+| [`@ripen/elements`](packages/elements) | Web components: `<ripen-channel-picker>` with the consent step, `<ripen-feedback>` with pulse and report form |
 
 ## Development
 
@@ -68,7 +79,8 @@ Requires Node.js 22.18+ and pnpm (the version is pinned in `package.json`).
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm test        # node:test, runs TypeScript directly
+pnpm test          # node:test, runs TypeScript directly
+pnpm test:browser  # web components in headless Chromium against a real server
 pnpm typecheck
 pnpm build
 ```
@@ -78,7 +90,7 @@ Design decisions are recorded in [docs/adr](docs/adr). The background research (
 ## Roadmap
 
 - [x] Spec, ADRs, core model, server, JavaScript SDK
-- [ ] Web component: channel switcher, pulse and report form
+- [x] Web components: channel picker, pulse and report form
 - [ ] OpenFeature provider, to work alongside existing flag systems
 - [ ] CLI and GitHub Action for promotion in CI
 - [ ] Dashboard (Angular)
