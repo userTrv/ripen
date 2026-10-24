@@ -9,6 +9,11 @@
       "ripen-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./engine": {
+      "ripen-source": "./src/engine.ts",
+      "types": "./dist/engine.d.ts",
+      "default": "./dist/engine.js"
     }
   },
   "files": [

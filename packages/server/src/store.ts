@@ -1,40 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
+import { DAY_MS, type FeatureRow, type HistoryRow, type ReportView, type RipenStore, type SubscriberRow } from './storage.ts';
 
-/**
- * SQLite storage. Every event row keeps the channel the subscriber was in at
- * that moment, so health is computed from history rather than current state.
- */
-
-export interface SubscriberRow {
-  id: string;
-  channel: string;
-  consent: number;
-  joined_at: number;
-  last_seen_at: number;
-  last_pulse_at: number | null;
-  demoted_from: string | null;
-  demoted_reason: string | null;
-}
-
-export interface FeatureRow {
-  key: string;
-  description: string;
-  stage: string;
-  stage_since: number;
-  gate_json: string | null;
-  created_at: number;
-}
-
-export interface HistoryRow {
-  feature: string;
-  from_stage: string;
-  to_stage: string;
-  action: string;
-  actor: string | null;
-  forced: number;
-  checks_json: string | null;
-  created_at: number;
-}
+/** SQLite storage for Node.js. */
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS subscribers (
@@ -105,9 +72,7 @@ CREATE TABLE IF NOT EXISTS history (
 );
 `;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export class Store {
+export class Store implements RipenStore {
   readonly db: DatabaseSync;
 
   constructor(path: string) {
@@ -246,7 +211,10 @@ export class Store {
     if (channels.length === 0) return null;
     const ph = placeholders(channels);
     const active = this.db
-      .prepare(`SELECT COUNT(DISTINCT subscriber_id) AS n FROM activity WHERE day >= ? AND channel IN (${ph})`)
+      .prepare(
+        `SELECT COUNT(DISTINCT a.subscriber_id) AS n FROM activity a JOIN subscribers s ON s.id = a.subscriber_id
+         WHERE s.consent = 1 AND a.day >= ? AND a.channel IN (${ph})`,
+      )
       .get(Math.floor(since / DAY_MS), ...channels) as { n: number };
     if (Number(active.n) === 0) return null;
     const errors = this.db
@@ -265,15 +233,6 @@ export class Store {
       )
       .all(since, feature, ...channels, limit) as unknown as ReportView[];
   }
-}
-
-export interface ReportView {
-  id: number;
-  channel: string;
-  feature: string | null;
-  message: string;
-  app_version: string | null;
-  created_at: number;
 }
 
 function placeholders(values: unknown[]): string {

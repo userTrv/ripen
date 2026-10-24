@@ -163,8 +163,11 @@ describe('channels and features', () => {
     await admin('POST', '/v1/admin/features/pay/promote');
     const e1 = client('e1');
     await e1.setChannel('early', { consent: true });
+    // The baseline counts only subscribers who agreed to send errors.
     const r1 = client('r1');
-    await r1.start();
+    await r1.setChannel('regular', { consent: true });
+    const r2 = client('r2');
+    await r2.start();
 
     await e1.captureError(new TypeError('cannot read properties of undefined'));
     const health = await admin('GET', '/v1/admin/features/pay/health');

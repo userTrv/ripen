@@ -16,7 +16,7 @@ import {
   type RipenConfig,
   type StageHealth,
 } from '@ripen/core';
-import type { FeatureRow, ReportView, Store, SubscriberRow } from './store.ts';
+import type { FeatureRow, ReportView, RipenStore, SubscriberRow } from './storage.ts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -63,10 +63,10 @@ export interface HealthView {
 
 export class Service {
   readonly config: RipenConfig;
-  private readonly store: Store;
+  private readonly store: RipenStore;
   private readonly now: () => Date;
 
-  constructor(config: RipenConfig, store: Store, now: () => Date = () => new Date()) {
+  constructor(config: RipenConfig, store: RipenStore, now: () => Date = () => new Date()) {
     this.config = config;
     this.store = store;
     this.now = now;
@@ -100,6 +100,8 @@ export class Service {
         next.joined_at = now;
       }
       this.store.updateSubscriber(next);
+      // Today's activity belongs to the channel the subscriber is in now.
+      this.store.touchActivity(next.id, next.channel, now);
       return next;
     });
     return this.sessionView(row);

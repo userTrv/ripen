@@ -72,7 +72,7 @@ The server measures since the feature entered its current stage:
 |---|---|
 | `daysInStage` | Time since `stageSince` |
 | `pulsesOk`, `pulsesBroken` | Pulses about this feature or about the app in general, from channels that have the feature |
-| `errorRateWith` | Errors per active subscriber in channels that have the feature |
+| `errorRateWith` | Errors per active consenting subscriber in channels that have the feature |
 | `errorRateWithout` | The same for channels that do not have it yet |
 
 Checks, all of which must pass:
@@ -84,7 +84,7 @@ Checks, all of which must pass:
 | `broken_ratio` | `pulsesBroken / pulses <= maxBrokenRatio` (0 pulses count as 0) |
 | `error_rate` | `errorRateWith / errorRateWithout <= maxErrorRateRatio`. Passes if there are no errors with the feature or no group without it; fails if errors appear only with the feature |
 
-Every event row stores the channel the subscriber was in at that moment, so later channel changes do not rewrite history. A subscriber is "active" on a day when they opened a session or sent an event that day.
+Every event row stores the channel the subscriber was in at that moment, so later channel changes do not rewrite history. A subscriber is "active" on a day when they opened a session or sent an event that day. Error rates count only subscribers who consented to error collection: the others never send errors, and counting them would make the group without the feature look error-free.
 
 ## 5. HTTP API
 
@@ -136,7 +136,10 @@ Choosing a channel stores the given `consent`. Choosing a channel with `consent:
 - Request body: 64 KB. Report message: 4000 characters. Error message: 1000 characters.
 - CORS headers are sent only for the client API and only for origins listed in `RIPEN_CORS_ORIGINS`.
 
-## 6. Privacy
+## 6. Storage and runtimes
+
+- `@ripen/server` serves the API over `node:http` with SQLite (`Store`).
+- `@ripen/server/engine` has no Node.js imports: the service, the API as a function `createApi(service, options)(request)` and `MemoryStore`. It runs in browsers and edge runtimes; the in-browser demo uses it.## 7. Privacy
 
 - The server runs on the adopter's infrastructure. Ripen authors receive nothing.
 - No IP addresses or user agents are stored.
