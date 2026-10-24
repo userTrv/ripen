@@ -46,6 +46,8 @@ importers:
 
   packages/core: {}
 
+  packages/dashboard: {}
+
   packages/elements:
     devDependencies:
       '@ripen/sdk':

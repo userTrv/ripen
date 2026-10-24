@@ -131,6 +131,10 @@ Choosing a channel stores the given `consent`. Choosing a channel with `consent:
 | `POST /v1/admin/features/:key/rollback` | `{ to?, actor? }` | Feature, or `409 already_off`, `400 invalid_target` |
 | `GET /v1/admin/features/:key/history` | | Moves with actor, `forced` flag and gate checks |
 
+### Dashboard
+
+With `RIPEN_DASHBOARD_DIR` set, the server serves the built `@ripen/dashboard` at `GET /dashboard/` (and redirects `/dashboard` there). Only files inside that directory with known types are served, with `Content-Security-Policy: default-src 'self'`, so the page can talk only to this server. The admin token is entered in the page, kept in `sessionStorage` for the tab, and sent as a Bearer token to the admin API.
+
 ### Limits
 
 - Request body: 64 KB. Report message: 4000 characters. Error message: 1000 characters.

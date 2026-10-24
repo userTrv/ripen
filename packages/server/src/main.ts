@@ -21,12 +21,14 @@ const server = createRipenServer(service, {
   clientKey,
   adminToken,
   corsOrigins: (env['RIPEN_CORS_ORIGINS'] ?? '*').split(',').map((s) => s.trim()).filter(Boolean),
+  ...(env['RIPEN_DASHBOARD_DIR'] ? { dashboardDir: env['RIPEN_DASHBOARD_DIR'] } : {}),
 });
 
 const port = Number(env['PORT'] ?? 4747);
 const host = env['HOST'] ?? '127.0.0.1';
 server.listen(port, host, () => {
   console.log(`ripen server on http://${host}:${port}, channels: ${config.channels.map((c) => c.id).join(' → ')}`);
+  if (env['RIPEN_DASHBOARD_DIR']) console.log(`dashboard on http://${host}:${port}/dashboard/`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

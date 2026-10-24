@@ -18,10 +18,10 @@ Repository: [github.com/userTrv/ripen](https://github.com/userTrv/ripen). Status
 pnpm install
 export RIPEN_CLIENT_KEY="$(openssl rand -hex 24)"   # ships inside your app
 export RIPEN_ADMIN_TOKEN="$(openssl rand -hex 24)"  # keep secret: CI and dashboard
-pnpm dev:server                                     # http://127.0.0.1:4747
+pnpm build && pnpm dev:server                       # http://127.0.0.1:4747, console at /dashboard/
 ```
 
-Without `ripen.config.json` the server uses the default three channels. Settings: `RIPEN_CONFIG`, `RIPEN_DB`, `RIPEN_CORS_ORIGINS`, `HOST`, `PORT`.
+Without `ripen.config.json` the server uses the default three channels. Settings: `RIPEN_CONFIG`, `RIPEN_DB`, `RIPEN_CORS_ORIGINS`, `RIPEN_DASHBOARD_DIR`, `HOST`, `PORT`.
 
 ### With Docker
 
@@ -31,7 +31,7 @@ docker run -d --name ripen -p 4747:4747 -v ripen-data:/data --env-file ripen.env
 docker exec -e RIPEN_URL=http://127.0.0.1:4747 ripen ripen features    # the CLI is in the image
 ```
 
-`ripen.env` holds `RIPEN_CLIENT_KEY` and `RIPEN_ADMIN_TOKEN`; keep it out of git. Data and an optional `ripen.config.json` live in the `/data` volume. The image runs as a non-root user and contains only Ripen's compiled code on top of `node:22.23.3-alpine`, pinned by digest.
+`ripen.env` holds `RIPEN_CLIENT_KEY` and `RIPEN_ADMIN_TOKEN`; keep it out of git. Data and an optional `ripen.config.json` live in the `/data` volume. The release console is at `http://localhost:4747/dashboard/`. The image runs as a non-root user and contains only Ripen's compiled code on top of `node:22.23.3-alpine`, pinned by digest.
 
 ### In the app
 
@@ -98,6 +98,7 @@ A nightly CI job can promote everything that is ready: `ripen promote <key>` exi
 | [`@ripen/cli`](packages/cli) | `ripen` command for CI and terminals |
 | [`@ripen/server/engine`](packages/server/src/engine.ts) | The service, the API as a function and in-memory storage, without Node.js: browsers, edge runtimes |
 | [`@ripen/openfeature`](packages/openfeature) | OpenFeature provider: read Ripen features through the OpenFeature web SDK, send pulses with `client.track('ripen.ok')` |
+| [`@ripen/dashboard`](packages/dashboard) | Release console as a web component: channels, gate checks, reports, promote, roll back, turn off, history. The server serves it at `/dashboard/` |
 | [`@ripen/elements`](packages/elements) | Web components: `<ripen-channel-picker>` with the consent step, `<ripen-feedback>` with pulse and report form |
 
 ## Development
@@ -107,7 +108,7 @@ Requires Node.js 22.18+ and pnpm (the version is pinned in `package.json`).
 ```bash
 pnpm install --frozen-lockfile
 pnpm test          # node:test, runs TypeScript directly
-pnpm test:browser  # web components in headless Chromium against a real server
+pnpm test:browser  # web components and dashboard in headless Chromium against a real server
 pnpm typecheck
 pnpm build
 ```
@@ -121,7 +122,7 @@ Design decisions are recorded in [docs/adr](docs/adr). The background research (
 - [x] OpenFeature provider, to work alongside existing flag systems
 - [x] CLI for promotion in CI
 - [ ] GitHub Action
-- [ ] Dashboard (Angular)
+- [x] Dashboard (web component, served by the server)
 - [x] In-browser demo (`pnpm demo`, then serve `apps/demo/site`)
 - [x] Docker image
 - [ ] Flutter SDK, adapters for desktop updaters
