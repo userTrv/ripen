@@ -139,7 +139,9 @@ Choosing a channel stores the given `consent`. Choosing a channel with `consent:
 ## 6. Storage and runtimes
 
 - `@ripen/server` serves the API over `node:http` with SQLite (`Store`).
-- `@ripen/server/engine` has no Node.js imports: the service, the API as a function `createApi(service, options)(request)` and `MemoryStore`. It runs in browsers and edge runtimes; the in-browser demo uses it.## 7. Privacy
+- `@ripen/server/engine` has no Node.js imports: the service, the API as a function `createApi(service, options)(request)` and `MemoryStore`. It runs in browsers and edge runtimes; the in-browser demo uses it.
+
+## 7. Privacy
 
 - The server runs on the adopter's infrastructure. Ripen authors receive nothing.
 - No IP addresses or user agents are stored.
