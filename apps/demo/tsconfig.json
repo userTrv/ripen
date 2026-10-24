@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "types": []
+  },
+  "include": ["src"],
+  "references": [{ "path": "../../packages/server" }, { "path": "../../packages/elements" }, { "path": "../../packages/sdk-js" }]
+}

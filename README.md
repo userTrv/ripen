@@ -74,6 +74,7 @@ A nightly CI job can promote everything that is ready: `ripen promote <key>` exi
 | [`@ripen/server`](packages/server) | HTTP server on `node:http` and `node:sqlite` |
 | [`@ripen/sdk`](packages/sdk-js) | JavaScript SDK for browsers and Node.js |
 | [`@ripen/cli`](packages/cli) | `ripen` command for CI and terminals |
+| [`@ripen/server/engine`](packages/server/src/engine.ts) | The service, the API as a function and in-memory storage, without Node.js: browsers, edge runtimes |
 | [`@ripen/elements`](packages/elements) | Web components: `<ripen-channel-picker>` with the consent step, `<ripen-feedback>` with pulse and report form |
 
 ## Development
@@ -98,7 +99,8 @@ Design decisions are recorded in [docs/adr](docs/adr). The background research (
 - [x] CLI for promotion in CI
 - [ ] GitHub Action
 - [ ] Dashboard (Angular)
-- [ ] Docker image, in-browser demo
+- [x] In-browser demo (`pnpm demo`, then serve `apps/demo/site`)
+- [ ] Docker image
 - [ ] Flutter SDK, adapters for desktop updaters
 
 ## License

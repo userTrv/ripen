@@ -9,3 +9,4 @@ dist/
 *.key
 *.db
 *.db-*
+apps/demo/site/

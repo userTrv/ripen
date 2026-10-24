@@ -27,6 +27,21 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  apps/demo:
+    devDependencies:
+      '@ripen/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@ripen/elements':
+        specifier: workspace:*
+        version: link:../../packages/elements
+      '@ripen/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk-js
+      '@ripen/server':
+        specifier: workspace:*
+        version: link:../../packages/server
+
   packages/cli: {}
 
   packages/core: {}
