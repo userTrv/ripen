@@ -23,6 +23,16 @@ pnpm dev:server                                     # http://127.0.0.1:4747
 
 Without `ripen.config.json` the server uses the default three channels. Settings: `RIPEN_CONFIG`, `RIPEN_DB`, `RIPEN_CORS_ORIGINS`, `HOST`, `PORT`.
 
+### With Docker
+
+```bash
+docker build -t ripen .
+docker run -d --name ripen -p 4747:4747 -v ripen-data:/data --env-file ripen.env ripen
+docker exec -e RIPEN_URL=http://127.0.0.1:4747 ripen ripen features    # the CLI is in the image
+```
+
+`ripen.env` holds `RIPEN_CLIENT_KEY` and `RIPEN_ADMIN_TOKEN`; keep it out of git. Data and an optional `ripen.config.json` live in the `/data` volume. The image runs as a non-root user and contains only Ripen's compiled code on top of `node:22.23.3-alpine`, pinned by digest.
+
 ### In the app
 
 ```ts
@@ -113,7 +123,7 @@ Design decisions are recorded in [docs/adr](docs/adr). The background research (
 - [ ] GitHub Action
 - [ ] Dashboard (Angular)
 - [x] In-browser demo (`pnpm demo`, then serve `apps/demo/site`)
-- [ ] Docker image
+- [x] Docker image
 - [ ] Flutter SDK, adapters for desktop updaters
 
 ## License
