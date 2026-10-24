@@ -65,7 +65,7 @@ export interface RipenStore {
 
   addPulse(subscriberId: string, channel: string, feature: string | null, status: 'ok' | 'broken', appVersion: string | null, at: number): void;
   addReport(subscriberId: string, channel: string, feature: string | null, message: string, appVersion: string | null, contextJson: string | null, at: number): number;
-  addError(subscriberId: string, channel: string, fingerprint: string, message: string | null, appVersion: string | null, at: number): void;
+  addError(subscriberId: string, channel: string, feature: string | null, fingerprint: string, message: string | null, appVersion: string | null, at: number): void;
 
   /** Pulses about the feature or about the app in general, from the given channels since `since`. */
   countPulses(channels: string[], feature: string, since: number): { ok: number; broken: number };
@@ -73,8 +73,9 @@ export interface RipenStore {
    * Errors per active subscriber who consented to error collection, in the given
    * channels since `since`; null if no such subscriber was active. Subscribers
    * without consent never send errors, so counting them would skew the baseline.
+   * Errors attributed to other features are left out.
    */
-  errorRate(channels: string[], since: number): number | null;
+  errorRate(channels: string[], feature: string, since: number): number | null;
   /** Latest reports about the feature or the app in general, newest first. */
   recentReports(channels: string[], feature: string, since: number, limit?: number): ReportView[];
 }

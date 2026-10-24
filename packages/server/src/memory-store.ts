@@ -17,6 +17,7 @@ interface Report extends ReportView {
 interface ErrorEvent {
   subscriberId: string;
   channel: string;
+  feature: string | null;
   fingerprint: string;
   message: string | null;
   appVersion: string | null;
@@ -120,8 +121,8 @@ export class MemoryStore implements RipenStore {
     return id;
   }
 
-  addError(subscriberId: string, channel: string, fingerprint: string, message: string | null, appVersion: string | null, at: number): void {
-    this.data.errors.push({ subscriberId, channel, fingerprint, message, appVersion, at });
+  addError(subscriberId: string, channel: string, feature: string | null, fingerprint: string, message: string | null, appVersion: string | null, at: number): void {
+    this.data.errors.push({ subscriberId, channel, feature, fingerprint, message, appVersion, at });
   }
 
   countPulses(channels: string[], feature: string, since: number): { ok: number; broken: number } {
@@ -135,7 +136,7 @@ export class MemoryStore implements RipenStore {
     return { ok, broken };
   }
 
-  errorRate(channels: string[], since: number): number | null {
+  errorRate(channels: string[], feature: string, since: number): number | null {
     if (channels.length === 0) return null;
     const sinceDay = Math.floor(since / DAY_MS);
     const active = new Set<string>();
@@ -143,7 +144,7 @@ export class MemoryStore implements RipenStore {
       if (a.day >= sinceDay && channels.includes(a.channel) && this.data.subscribers.get(a.subscriberId)?.consent) active.add(a.subscriberId);
     }
     if (active.size === 0) return null;
-    const errors = this.data.errors.filter((e) => e.at >= since && channels.includes(e.channel)).length;
+    const errors = this.data.errors.filter((e) => e.at >= since && channels.includes(e.channel) && (e.feature === null || e.feature === feature)).length;
     return errors / active.size;
   }
 

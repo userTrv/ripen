@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS errors (
   id INTEGER PRIMARY KEY,
   subscriber_id TEXT NOT NULL,
   channel TEXT NOT NULL,
+  feature TEXT,
   fingerprint TEXT NOT NULL,
   message TEXT,
   app_version TEXT,
@@ -79,6 +80,13 @@ export class Store implements RipenStore {
     this.db = new DatabaseSync(path);
     this.db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
     this.db.exec(SCHEMA);
+    this.migrate();
+  }
+
+  /** Brings databases created by earlier versions up to the current schema. */
+  private migrate(): void {
+    const columns = this.db.prepare('PRAGMA table_info(errors)').all() as { name: string }[];
+    if (!columns.some((c) => c.name === 'feature')) this.db.exec('ALTER TABLE errors ADD COLUMN feature TEXT');
   }
 
   close(): void {
@@ -188,10 +196,10 @@ export class Store implements RipenStore {
     return Number(result.lastInsertRowid);
   }
 
-  addError(subscriberId: string, channel: string, fingerprint: string, message: string | null, appVersion: string | null, at: number): void {
+  addError(subscriberId: string, channel: string, feature: string | null, fingerprint: string, message: string | null, appVersion: string | null, at: number): void {
     this.db
-      .prepare('INSERT INTO errors (subscriber_id, channel, fingerprint, message, app_version, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(subscriberId, channel, fingerprint, message, appVersion, at);
+      .prepare('INSERT INTO errors (subscriber_id, channel, feature, fingerprint, message, app_version, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(subscriberId, channel, feature, fingerprint, message, appVersion, at);
   }
 
   /** Pulses about the feature or about the app in general, from the given channels since `since`. */
@@ -206,8 +214,7 @@ export class Store implements RipenStore {
     return { ok: Number(row.ok), broken: Number(row.broken) };
   }
 
-  /** Errors per active subscriber in the given channels since `since`, or null if nobody was active. */
-  errorRate(channels: string[], since: number): number | null {
+  errorRate(channels: string[], feature: string, since: number): number | null {
     if (channels.length === 0) return null;
     const ph = placeholders(channels);
     const active = this.db
@@ -218,8 +225,8 @@ export class Store implements RipenStore {
       .get(Math.floor(since / DAY_MS), ...channels) as { n: number };
     if (Number(active.n) === 0) return null;
     const errors = this.db
-      .prepare(`SELECT COUNT(*) AS n FROM errors WHERE created_at >= ? AND channel IN (${ph})`)
-      .get(since, ...channels) as { n: number };
+      .prepare(`SELECT COUNT(*) AS n FROM errors WHERE created_at >= ? AND (feature IS NULL OR feature = ?) AND channel IN (${ph})`)
+      .get(since, feature, ...channels) as { n: number };
     return Number(errors.n) / Number(active.n);
   }
 

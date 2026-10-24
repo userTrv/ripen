@@ -108,7 +108,7 @@ function buildRoutes(service: Service): Route[] {
       return { id: reportId };
     }),
     route('POST', '/v1/client/errors', 'client', ({ body }) => {
-      service.error(id(body, 'subscriberId'), str(body, 'fingerprint', 128), optStr(body, 'message', 1000), optStr(body, 'appVersion', 64));
+      service.error(id(body, 'subscriberId'), str(body, 'fingerprint', 128), optStr(body, 'message', 1000), optStr(body, 'appVersion', 64), featureKey(body));
     }),
 
     route('GET', '/v1/admin/channels', 'admin', () => service.channelStats()),

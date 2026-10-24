@@ -25,7 +25,7 @@ Breaking the contract is not punished: the subscriber is moved one channel towar
 
 **Report.** A written description of a problem, optionally about one feature, with an optional JSON `context`.
 
-**Error.** An automatically captured error with a fingerprint that groups identical errors. Accepted only from subscribers who consented.
+**Error.** An automatically captured error with a fingerprint that groups identical errors, optionally attributed to one feature. Accepted only from subscribers who consented.
 
 **Gate.** Rules a feature must pass before moving to the next channel.
 
@@ -72,7 +72,7 @@ The server measures since the feature entered its current stage:
 |---|---|
 | `daysInStage` | Time since `stageSince` |
 | `pulsesOk`, `pulsesBroken` | Pulses about this feature or about the app in general, from channels that have the feature |
-| `errorRateWith` | Errors per active consenting subscriber in channels that have the feature |
+| `errorRateWith` | Errors per active consenting subscriber in channels that have the feature. Errors attributed to other features are left out |
 | `errorRateWithout` | The same for channels that do not have it yet |
 
 Checks, all of which must pass:
@@ -105,7 +105,7 @@ All requests and responses are JSON. Errors look like `{ "error": "code", "messa
 | `PUT /v1/client/subscribers/:id/channel` | `{ channel, consent }` | Session. `400 consent_required` for telemetry channels without consent, `404 unknown_channel` |
 | `POST /v1/client/pulses` | `{ subscriberId, status: "ok" \| "broken", feature?, appVersion? }` | `204` |
 | `POST /v1/client/reports` | `{ subscriberId, message, feature?, appVersion?, context? }` | `{ id }` |
-| `POST /v1/client/errors` | `{ subscriberId, fingerprint, message?, appVersion? }` | `204`, silently ignored without consent |
+| `POST /v1/client/errors` | `{ subscriberId, fingerprint, message?, feature?, appVersion? }` | `204`, silently ignored without consent |
 
 Session:
 

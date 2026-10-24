@@ -127,14 +127,18 @@ export class Ripen {
     });
   }
 
-  /** Sends an error. The server ignores it unless the subscriber consented to telemetry. */
-  async captureError(error: unknown): Promise<void> {
+  /**
+   * Sends an error. The server ignores it unless the subscriber consented to telemetry.
+   * Pass `feature` when the error comes from a known feature, so it does not hold back others.
+   */
+  async captureError(error: unknown, { feature }: { feature?: string } = {}): Promise<void> {
     if (!this.current?.subscriber.consent) return;
     const { message, fingerprint } = describeError(error);
     await this.request('POST', '/v1/client/errors', {
       subscriberId: this.subscriberId,
       fingerprint,
       message,
+      feature,
       appVersion: this.options.appVersion,
     });
   }

@@ -55,7 +55,7 @@ export const DEFAULT_CONFIG: RipenConfig = {
     {
       id: 'early',
       name: 'Early',
-      description: 'New features first. Errors are collected automatically, a one-tap pulse is expected every two weeks.',
+      description: 'Get new features first and help find problems.',
       contract: { telemetry: true, pulseEveryDays: 14 },
     },
     {
@@ -67,7 +67,7 @@ export const DEFAULT_CONFIG: RipenConfig = {
     {
       id: 'calm',
       name: 'Calm',
-      description: 'Only features that have proven themselves. Nothing is expected from you.',
+      description: 'Only features that have proven themselves.',
     },
   ],
   gate: DEFAULT_GATE,

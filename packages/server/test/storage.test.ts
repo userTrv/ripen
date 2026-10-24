@@ -37,6 +37,8 @@ for (const [name, makeStore] of [
       await call('POST', '/v1/client/pulses', 'c', { subscriberId: 'e1', status: 'broken', feature: 'other' });
       await call('POST', '/v1/client/errors', 'c', { subscriberId: 'e1', fingerprint: 'x' });
       await call('POST', '/v1/client/errors', 'c', { subscriberId: 'r1', fingerprint: 'x' }); // no consent: dropped
+      // An error of another feature does not count against this one.
+      await call('POST', '/v1/client/errors', 'c', { subscriberId: 'e2', fingerprint: 'y', feature: 'other' });
 
       const health = (await call('GET', '/v1/admin/features/f1/health', 'a')).body as any;
       assert.deepEqual(
@@ -84,3 +86,23 @@ for (const [name, makeStore] of [
     });
   });
 }
+
+describe('SQLite migrations', () => {
+  it('adds the errors.feature column to databases from v0.1.0', async () => {
+    const { mkdtempSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { DatabaseSync } = await import('node:sqlite');
+    const dir = mkdtempSync(join(tmpdir(), 'ripen-'));
+    const file = join(dir, 'old.db');
+    const old = new DatabaseSync(file);
+    old.exec('CREATE TABLE errors (id INTEGER PRIMARY KEY, subscriber_id TEXT NOT NULL, channel TEXT NOT NULL, fingerprint TEXT NOT NULL, message TEXT, app_version TEXT, created_at INTEGER NOT NULL)');
+    old.close();
+    const store = new Store(file);
+    store.addError('s1', 'early', 'f1', 'fp', null, null, 0);
+    const columns = store.db.prepare('PRAGMA table_info(errors)').all() as { name: string }[];
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+    assert.ok(columns.some((c) => c.name === 'feature'));
+  });
+});

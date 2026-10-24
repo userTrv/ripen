@@ -124,12 +124,12 @@ export class Service {
     });
   }
 
-  error(subscriberId: string, fingerprint: string, message: string | null, appVersion: string | null): void {
+  error(subscriberId: string, fingerprint: string, message: string | null, appVersion: string | null, feature: string | null = null): void {
     this.store.transaction(() => {
       const row = this.loadSubscriber(subscriberId);
       // Errors are part of the contract: only accepted from subscribers who agreed to it.
       if (!row.consent) return;
-      this.store.addError(row.id, row.channel, fingerprint, message, appVersion, this.now().getTime());
+      this.store.addError(row.id, row.channel, feature, fingerprint, message, appVersion, this.now().getTime());
     });
   }
 
@@ -306,8 +306,8 @@ export class Service {
       daysInStage: (this.now().getTime() - since) / DAY_MS,
       pulsesOk: pulses.ok,
       pulsesBroken: pulses.broken,
-      errorRateWith: this.store.errorRate(split.with, since),
-      errorRateWithout: this.store.errorRate(split.without, since),
+      errorRateWith: this.store.errorRate(split.with, feature.key, since),
+      errorRateWithout: this.store.errorRate(split.without, feature.key, since),
     };
   }
 
