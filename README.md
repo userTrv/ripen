@@ -10,7 +10,7 @@ Ripen is a self-hosted layer of stability channels for any app. Users pick a cha
 - **No platform dependency.** Channels work at the feature level inside one build: no TestFlight, store tracks or beta programs needed.
 - **Self-hosted, zero runtime dependencies.** One Node.js process and one SQLite file. Your users' data stays with you.
 
-Status: early development, v0.1. The model and the HTTP API are described in the [specification](docs/spec.md).
+Repository: [github.com/userTrv/ripen](https://github.com/userTrv/ripen). Status: early development, v0.1. The model and the HTTP API are described in the [specification](docs/spec.md).
 
 ## Quick start
 
