@@ -50,6 +50,18 @@ await ripen.pulse('ok');
 await ripen.report('Search returns nothing for quoted phrases', { feature: 'search-v2' });
 ```
 
+### With OpenFeature
+
+```ts
+import { OpenFeature } from '@openfeature/web-sdk';
+import { RipenProvider } from '@ripen/openfeature';
+
+await OpenFeature.setProviderAndWait(new RipenProvider(ripen));
+const client = OpenFeature.getClient();
+client.getBooleanValue('new-editor', false);
+client.track('ripen.broken', { feature: 'new-editor' });   // a pulse about one feature
+```
+
 ### In CI or by hand
 
 ```bash
@@ -75,6 +87,7 @@ A nightly CI job can promote everything that is ready: `ripen promote <key>` exi
 | [`@ripen/sdk`](packages/sdk-js) | JavaScript SDK for browsers and Node.js |
 | [`@ripen/cli`](packages/cli) | `ripen` command for CI and terminals |
 | [`@ripen/server/engine`](packages/server/src/engine.ts) | The service, the API as a function and in-memory storage, without Node.js: browsers, edge runtimes |
+| [`@ripen/openfeature`](packages/openfeature) | OpenFeature provider: read Ripen features through the OpenFeature web SDK, send pulses with `client.track('ripen.ok')` |
 | [`@ripen/elements`](packages/elements) | Web components: `<ripen-channel-picker>` with the consent step, `<ripen-feedback>` with pulse and report form |
 
 ## Development
@@ -95,7 +108,7 @@ Design decisions are recorded in [docs/adr](docs/adr). The background research (
 
 - [x] Spec, ADRs, core model, server, JavaScript SDK
 - [x] Web components: channel picker, pulse and report form
-- [ ] OpenFeature provider, to work alongside existing flag systems
+- [x] OpenFeature provider, to work alongside existing flag systems
 - [x] CLI for promotion in CI
 - [ ] GitHub Action
 - [ ] Dashboard (Angular)

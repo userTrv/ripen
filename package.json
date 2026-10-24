@@ -9,7 +9,7 @@
   "scripts": {
     "test": "node --conditions=ripen-source --disable-warning=ExperimentalWarning --test \"packages/*/test/**/*.test.ts\"",
     "typecheck": "tsc -b",
-    "build": "pnpm clean && tsc -b packages/core packages/server packages/sdk-js packages/elements packages/cli apps/demo",
+    "build": "pnpm clean && tsc -b packages/core packages/server packages/sdk-js packages/elements packages/cli packages/openfeature apps/demo",
     "dev:server": "node --conditions=ripen-source --disable-warning=ExperimentalWarning packages/server/src/main.ts",
     "clean": "rm -rf packages/*/dist packages/*/tsconfig.tsbuildinfo apps/*/dist apps/*/tsconfig.tsbuildinfo apps/demo/site",
     "test:browser": "pnpm build && node --conditions=ripen-source --disable-warning=ExperimentalWarning scripts/browser-test.ts",
