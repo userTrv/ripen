@@ -51,6 +51,7 @@ On Node.js 22 `node:sqlite` prints an "experimental" warning; the flag hides it.
 | `RIPEN_DB` | `ripen.db` (`/data/ripen.db`) | SQLite file |
 | `RIPEN_CORS_ORIGINS` | `*` | Comma-separated origins allowed to call the client API from browsers |
 | `RIPEN_DASHBOARD_DIR` | not set (`/app/dashboard`) | Directory of the built console, served at `/dashboard/` |
+| `RIPEN_RETENTION_DAYS` | not set: keep everything | Delete pulses, reports, errors and activity older than this many days, at start and daily |
 | `HOST` | `127.0.0.1` (`0.0.0.0`) | Address to listen on |
 | `PORT` | `4747` | Port to listen on |
 
@@ -132,5 +133,6 @@ Ripen stores: subscriber ids (opaque), their channel and consent, daily activity
 - Errors are stored only for people who consented.
 - Report text and `context` are whatever your app sends. Do not put personal data there.
 - Subscriber ids should not be emails or other personal data; the SDKs generate random ones by default.
+- Set `RIPEN_RETENTION_DAYS` (for example 180) to delete old events automatically. Keep it longer than the longest time a feature stays in one channel: the gate only counts events since the feature entered its current channel.
 
 You are the operator of this data. If your users are in jurisdictions with data residency rules (GDPR, Russia's 152-FZ and others), host the server accordingly.

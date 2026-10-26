@@ -71,6 +71,27 @@ for (const [name, makeStore] of [
       assert.deepEqual(channels.map((c) => c.subscribers), [2, 2, 0]);
     });
 
+    it('deletes events past the retention period and keeps the rest', async () => {
+      const store = makeStore();
+      let now = Date.parse('2026-01-01T00:00:00Z');
+      const service = new Service(DEFAULT_CONFIG, store, () => new Date(now));
+      service.upsertFeature('kept', undefined, undefined);
+      for (let i = 0; i < 3; i++) service.promote('kept', 'test', true); // enabled everywhere
+      service.chooseChannel('old', 'early', true);
+      service.pulse('old', 'ok', null, null);
+      service.report('old', 'old report', null, null, undefined);
+      service.error('old', 'fp', null, null);
+      now += 40 * DAY;
+      service.pulse('old', 'broken', null, null);
+
+      assert.equal(service.purgeOlderThan(30), 3, 'the old pulse, report and error');
+      assert.equal(service.purgeOlderThan(30), 0, 'nothing left to delete');
+      const health = service.health('kept');
+      assert.equal(health.health.pulsesOk + health.health.pulsesBroken, 1, 'the recent pulse stays');
+      assert.equal(service.history('kept').length, 3, 'promotion history stays');
+      assert.equal(service.session('old').subscriber.id, 'old', 'the subscriber stays');
+    });
+
     it('drops everything written in a failed transaction', () => {
       const store = makeStore();
       const row = { key: 'tx', description: '', stage: 'off', stage_since: 0, gate_json: null, created_at: 0 };

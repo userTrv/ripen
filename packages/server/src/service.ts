@@ -237,6 +237,11 @@ export class Service {
     }));
   }
 
+  /** Deletes events older than `days` days. Returns how many were deleted. */
+  purgeOlderThan(days: number): number {
+    return this.store.purge(this.now().getTime() - days * DAY_MS);
+  }
+
   channelStats(): { id: string; name: string; subscribers: number }[] {
     const counts = this.store.countSubscribersByChannel();
     return this.config.channels.map((c) => ({ id: c.id, name: c.name, subscribers: counts[c.id] ?? 0 }));

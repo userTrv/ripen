@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - GitHub Action (`action.yml`) running the bundled CLI, with no other actions and nothing to install.
 - Dart and Flutter SDK (`packages/sdk-dart`), no dependencies.
 - CI workflow without third-party actions, in the digest-pinned Node image.
+- `RIPEN_RETENTION_DAYS`: deletes pulses, reports, errors and activity older than the given number of days.
 - User guides in `docs/guide`, package READMEs, contributing and security policies, example configuration.
 
 ### Fixed
