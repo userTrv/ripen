@@ -1,0 +1,27 @@
+{
+  "channels": [
+    {
+      "id": "early",
+      "name": "Early",
+      "description": "Get new features first and help find problems.",
+      "contract": { "telemetry": true, "pulseEveryDays": 14 }
+    },
+    {
+      "id": "regular",
+      "name": "Regular",
+      "description": "Features that early subscribers found no serious problems with.",
+      "default": true
+    },
+    {
+      "id": "calm",
+      "name": "Calm",
+      "description": "Only features that have proven themselves."
+    }
+  ],
+  "gate": {
+    "minDaysInChannel": 3,
+    "minPulses": 20,
+    "maxBrokenRatio": 0.05,
+    "maxErrorRateRatio": 1.5
+  }
+}

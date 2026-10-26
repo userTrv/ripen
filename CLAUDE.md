@@ -5,16 +5,21 @@ Ripen — open source self-hosted слой каналов стабильност
 ## Структура
 
 - `packages/core` — доменная модель без ввода-вывода: каналы, договор канала, гейты.
-- `packages/server` — HTTP-сервер на `node:http` и `node:sqlite`.
-- `packages/sdk-js` — JavaScript SDK для браузера и Node.js.
+- `packages/server` — HTTP-сервер на `node:http` и `node:sqlite`; `src/engine.ts` работает без Node (браузер, edge).
+- `packages/sdk-js`, `packages/sdk-dart` — SDK для JavaScript и Dart/Flutter.
+- `packages/elements`, `packages/dashboard` — веб-компоненты: выбор канала и отзыв, консоль релизов.
+- `packages/cli`, `action.yml`, `action/ripen.mjs` — CLI и GitHub Action (бандл генерируется `pnpm build:action`, не править руками).
+- `packages/openfeature` — провайдер OpenFeature (peer-зависимость, ADR 8).
+- `apps/demo` — демо в браузере.
 - `docs/spec.md` — модель и HTTP API. Меняешь поведение — обнови спецификацию в том же коммите.
-- `docs/adr/` — архитектурные решения. Новое значимое решение — новый ADR.
+- `docs/guide/` — руководства для пользователей, `docs/adr/` — архитектурные решения, `docs/research/` — исследование и решения на русском.
+- Пользовательские изменения записывать в `CHANGELOG.md` в раздел «Unreleased».
 
 ## Код
 
 - Без runtime-зависимостей (ADR 3). Новая зависимость — только с явного согласия владельца.
 - TypeScript только со стираемым синтаксисом (`erasableSyntaxOnly`): без enum, namespace и parameter properties. Относительные импорты с расширением `.ts`.
-- Проверки перед коммитом: `pnpm test` и `pnpm typecheck`.
+- Проверки перед коммитом: `pnpm check` (типы, тесты, сборка, свежесть бандла экшена); при правке компонентов и консоли ещё `pnpm test:browser`, при правке Dart SDK — `pnpm test:dart`.
 
 ## Зависимости
 

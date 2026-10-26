@@ -2,8 +2,25 @@
   "name": "@ripen/openfeature",
   "version": "0.1.0",
   "description": "OpenFeature provider for Ripen: evaluate Ripen features through the OpenFeature web SDK.",
+  "keywords": [
+    "ripen",
+    "openfeature",
+    "feature-flags",
+    "provider"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/openfeature#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/openfeature"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "ripen-source": "./src/index.ts",
@@ -12,6 +29,7 @@
     }
   },
   "files": [
+    "README.md",
     "dist"
   ],
   "peerDependencies": {
@@ -22,5 +40,8 @@
     "@openfeature/core": "1.12.0",
     "@openfeature/web-sdk": "1.10.0",
     "@ripen/sdk": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

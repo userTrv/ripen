@@ -2,8 +2,26 @@
   "name": "@ripen/core",
   "version": "0.1.0",
   "description": "Ripen domain model: channels, contract, gates. No dependencies.",
+  "keywords": [
+    "ripen",
+    "channels",
+    "feature-flags",
+    "release",
+    "gate"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/core"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "ripen-source": "./src/index.ts",
@@ -12,6 +30,10 @@
     }
   },
   "files": [
+    "README.md",
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

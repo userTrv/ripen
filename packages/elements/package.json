@@ -2,7 +2,24 @@
   "name": "@ripen/elements",
   "version": "0.1.0",
   "description": "Ripen web components: channel picker, pulse and report form. Framework-agnostic, no dependencies.",
+  "keywords": [
+    "ripen",
+    "web-components",
+    "feature-flags",
+    "beta",
+    "feedback"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/elements#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/elements"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
   "exports": {
     ".": {
@@ -12,6 +29,7 @@
     }
   },
   "files": [
+    "README.md",
     "dist"
   ],
   "peerDependencies": {
@@ -19,5 +37,8 @@
   },
   "devDependencies": {
     "@ripen/sdk": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

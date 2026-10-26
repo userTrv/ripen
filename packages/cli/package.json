@@ -2,7 +2,24 @@
   "name": "@ripen/cli",
   "version": "0.1.0",
   "description": "Ripen command-line tool: create, promote and roll back features from CI or a terminal.",
+  "keywords": [
+    "ripen",
+    "cli",
+    "feature-flags",
+    "ci",
+    "release"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/cli"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
   "bin": {
     "ripen": "./dist/main.js"
@@ -15,6 +32,13 @@
     }
   },
   "files": [
+    "README.md",
     "dist"
-  ]
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
