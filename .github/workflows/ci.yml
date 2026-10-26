@@ -26,6 +26,8 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           apk add --no-cache git
+          # The workspace belongs to the runner user, the container runs as root.
+          git config --global --add safe.directory "$PWD"
           git init -q .
           git remote add origin "$SERVER/$REPOSITORY.git"
           auth="$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
