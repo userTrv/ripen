@@ -15,7 +15,8 @@
     "test:browser": "pnpm build && node --conditions=ripen-source --disable-warning=ExperimentalWarning scripts/browser-test.ts",
     "demo": "pnpm build && node scripts/build-demo.ts",
     "build:action": "pnpm build && node scripts/build-action.ts",
-    "check": "pnpm typecheck && pnpm test && pnpm build && node scripts/build-action.ts --check"
+    "check": "pnpm typecheck && pnpm test && pnpm build && node scripts/build-action.ts --check",
+    "test:dart": "cd packages/sdk-dart && ${RIPEN_DART:-dart} test/ripen_test.dart"
   },
   "devDependencies": {
     "@ripen/cli": "workspace:*",
