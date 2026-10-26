@@ -31,12 +31,20 @@ server.listen(port, host, () => {
   if (env['RIPEN_DASHBOARD_DIR']) console.log(`dashboard on http://${host}:${port}/dashboard/`);
 });
 
+// Stop accepting connections, let requests in flight finish, drop idle keep-alive
+// connections (they would otherwise hold the shutdown open) and give up after 5 s.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, () => {
+  process.once(signal, () => {
     server.close(() => {
       store.close();
       process.exit(0);
     });
+    server.closeIdleConnections();
+    setTimeout(() => {
+      server.closeAllConnections();
+      store.close();
+      process.exit(0);
+    }, 5000).unref();
   });
 }
 
