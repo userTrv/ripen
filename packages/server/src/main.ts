@@ -53,7 +53,12 @@ function loadConfig(path: string): RipenConfig {
     console.log(`${path} not found, using the default channels`);
     return DEFAULT_CONFIG;
   }
-  return parseConfig(JSON.parse(readFileSync(path, 'utf8')));
+  try {
+    return parseConfig(JSON.parse(readFileSync(path, 'utf8')));
+  } catch (error) {
+    console.error(`${path}: ${(error as Error).message}`);
+    process.exit(1);
+  }
 }
 
 function requireSecret(name: string): string {

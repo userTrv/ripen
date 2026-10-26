@@ -200,6 +200,13 @@ export function createDashboardClass(): CustomElementConstructor {
         );
         for (const key of this.openHistory.keys()) this.openHistory.set(key, await this.client.history(key));
       } catch (error) {
+        if (error instanceof AdminError && error.status === 401) {
+          // The token was rotated on the server: ask for the new one.
+          this.signOut();
+          this.message = { text: 'The admin token changed. Sign in with the new one.', tone: 'bad' };
+          this.render();
+          return;
+        }
         this.message = { text: `Could not load: ${(error as Error).message}`, tone: 'bad' };
       }
       this.render();
