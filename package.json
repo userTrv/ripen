@@ -13,7 +13,9 @@
     "dev:server": "RIPEN_DASHBOARD_DIR=packages/dashboard/dist node --conditions=ripen-source --disable-warning=ExperimentalWarning packages/server/src/main.ts",
     "clean": "rm -rf packages/*/dist packages/*/tsconfig.tsbuildinfo apps/*/dist apps/*/tsconfig.tsbuildinfo apps/demo/site",
     "test:browser": "pnpm build && node --conditions=ripen-source --disable-warning=ExperimentalWarning scripts/browser-test.ts",
-    "demo": "pnpm build && node scripts/build-demo.ts"
+    "demo": "pnpm build && node scripts/build-demo.ts",
+    "build:action": "pnpm build && node scripts/build-action.ts",
+    "check": "pnpm typecheck && pnpm test && pnpm build && node scripts/build-action.ts --check"
   },
   "devDependencies": {
     "@ripen/cli": "workspace:*",

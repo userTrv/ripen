@@ -1,0 +1,51 @@
+name: Ripen
+description: Create, promote and roll back Ripen features from a workflow. Runs the bundled CLI with Node.js, installs nothing.
+author: userTrv
+branding:
+  icon: trending-up
+  color: green
+
+inputs:
+  url:
+    description: Base URL of your Ripen server, e.g. https://ripen.example.com
+    required: true
+  admin-token:
+    description: Ripen admin token. Pass it from a secret, e.g. secrets.RIPEN_ADMIN_TOKEN
+    required: true
+  command:
+    description: >-
+      CLI command and arguments, e.g. "promote-ready", "promote new-editor",
+      "health new-editor", "rollback new-editor --to off". See `ripen --help`.
+    required: true
+  actor:
+    description: Name recorded in the feature history
+    required: false
+    default: ${{ github.actor }}
+
+outputs:
+  json:
+    description: The command's JSON output
+    value: ${{ steps.ripen.outputs.json }}
+
+runs:
+  using: composite
+  steps:
+    - id: ripen
+      shell: bash
+      # Inputs reach the script only through the environment, never through ${{ }}
+      # interpolation inside `run`, so they cannot inject shell code.
+      env:
+        RIPEN_URL: ${{ inputs.url }}
+        RIPEN_ADMIN_TOKEN: ${{ inputs.admin-token }}
+        RIPEN_COMMAND: ${{ inputs.command }}
+        RIPEN_ACTOR: ${{ inputs.actor }}
+      run: |
+        set -f  # no glob expansion of the command words
+        read -r -a args <<< "$RIPEN_COMMAND"
+        # One run only: commands like promote change state.
+        status=0
+        json="$(node "$GITHUB_ACTION_PATH/action/ripen.mjs" "${args[@]}" --actor "$RIPEN_ACTOR" --json)" || status=$?
+        echo "$json"
+        delimiter="ripen_$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
+        { echo "json<<$delimiter"; echo "$json"; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
+        exit "$status"
