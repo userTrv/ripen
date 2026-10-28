@@ -8,10 +8,10 @@ Ripen is one Node.js process with one SQLite file. It runs on your infrastructur
 
 ```bash
 docker run -d --name ripen --restart unless-stopped \
-  -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ghcr.io/usertrv/ripen:0.2.0
+  -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ghcr.io/usertrv/ripen:0.3.0
 ```
 
-Images for amd64 and arm64 are published to GitHub Container Registry for every release: `ghcr.io/usertrv/ripen:<version>`, and `latest` for the newest stable one. For production, pin the digest shown on the [release](https://github.com/userTrv/ripen/releases) or by `docker buildx imagetools inspect ghcr.io/usertrv/ripen:0.2.0`: `ghcr.io/usertrv/ripen:0.2.0@sha256:…`. To build it yourself: `docker build -t ripen .` in a clone.
+Images for amd64 and arm64 are published to GitHub Container Registry for every release: `ghcr.io/usertrv/ripen:<version>`, and `latest` for the newest stable one. For production, pin the digest shown on the [release](https://github.com/userTrv/ripen/releases) or by `docker buildx imagetools inspect ghcr.io/usertrv/ripen:0.3.0`: `ghcr.io/usertrv/ripen:0.3.0@sha256:…`. To build it yourself: `docker build -t ripen .` in a clone.
 
 The image is built on `node:22.23.3-alpine` pinned by digest and contains only Ripen's compiled code: no packages from npm at runtime. It runs as the non-root `node` user, keeps data in the `/data` volume, has a healthcheck on `/healthz`, and serves the release console at `/dashboard/`.
 
@@ -20,7 +20,7 @@ Docker Compose:
 ```yaml
 services:
   ripen:
-    image: ghcr.io/usertrv/ripen:0.2.0
+    image: ghcr.io/usertrv/ripen:0.3.0
     restart: unless-stopped
     ports: ["127.0.0.1:4747:4747"]
     env_file: ripen.env

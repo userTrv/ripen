@@ -1,6 +1,6 @@
 {
   "name": "@ripen/dashboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ripen release console: channels, features, gates, promotion and rollback. A web component, no dependencies.",
   "keywords": [
     "ripen",

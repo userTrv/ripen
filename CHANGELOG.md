@@ -4,7 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-28
+
 ### Added
+- Dart SDK checks in CI, with Node.js and Dart downloads verified against pinned SHA-256 hashes.
 - Offline queue in the JavaScript and Dart SDKs: pulses, reports and errors sent without network are kept in storage (up to 50, for 7 days) and sent on the next start, when the browser is back online, or on `flush()`. Network failures throw `RipenNetworkError` / `RipenNetworkException`.
 
 ### Changed
@@ -47,6 +50,7 @@ First version.
 - `@ripen/dashboard`: release console served at `/dashboard/`.
 - Docker image and the in-browser demo.
 
-[Unreleased]: https://github.com/userTrv/ripen/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/userTrv/ripen/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/userTrv/ripen/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/userTrv/ripen/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/userTrv/ripen/releases/tag/v0.1.0
