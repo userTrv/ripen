@@ -16,6 +16,7 @@ import {
   type RipenConfig,
   type StageHealth,
 } from '@ripen/core';
+import type { EventListener, RipenEvent, RipenEventType } from './events.ts';
 import type { FeatureRow, ReportView, RipenStore, SubscriberRow } from './storage.ts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -65,6 +66,9 @@ export class Service {
   readonly config: RipenConfig;
   private readonly store: RipenStore;
   private readonly now: () => Date;
+  private readonly listeners = new Set<EventListener>();
+  /** Events of the transaction in progress; emitted once it commits. */
+  private pending: RipenEvent[] = [];
 
   constructor(config: RipenConfig, store: RipenStore, now: () => Date = () => new Date()) {
     this.config = config;
@@ -72,10 +76,16 @@ export class Service {
     this.now = now;
   }
 
+  /** Calls `listener` after every stored change worth telling others about. Returns an unsubscribe function. */
+  onEvent(listener: EventListener): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
   // Client side: what the SDK calls
 
   session(subscriberId: string): SessionView {
-    const row = this.store.transaction(() => this.loadSubscriber(subscriberId));
+    const row = this.tx(() => this.loadSubscriber(subscriberId));
     return this.sessionView(row);
   }
 
@@ -86,7 +96,7 @@ export class Service {
       const code = (error as { code?: string }).code ?? 'invalid_channel';
       throw new ServiceError(code === 'unknown_channel' ? 404 : 400, code, (error as Error).message);
     }
-    const row = this.store.transaction(() => {
+    const row = this.tx(() => {
       const current = this.loadSubscriber(subscriberId);
       const now = this.now().getTime();
       const next: SubscriberRow = {
@@ -108,7 +118,7 @@ export class Service {
   }
 
   pulse(subscriberId: string, status: 'ok' | 'broken', feature: string | null, appVersion: string | null): void {
-    this.store.transaction(() => {
+    this.tx(() => {
       const row = this.loadSubscriber(subscriberId);
       const now = this.now().getTime();
       this.store.addPulse(row.id, row.channel, feature, status, appVersion, now);
@@ -117,15 +127,17 @@ export class Service {
   }
 
   report(subscriberId: string, message: string, feature: string | null, appVersion: string | null, context: unknown): number {
-    return this.store.transaction(() => {
+    return this.tx(() => {
       const row = this.loadSubscriber(subscriberId);
       const contextJson = context === undefined ? null : JSON.stringify(context);
-      return this.store.addReport(row.id, row.channel, feature, message, appVersion, contextJson, this.now().getTime());
+      const id = this.store.addReport(row.id, row.channel, feature, message, appVersion, contextJson, this.now().getTime());
+      this.emit('report.created', { id, feature, channel: row.channel, message, appVersion });
+      return id;
     });
   }
 
   error(subscriberId: string, fingerprint: string, message: string | null, appVersion: string | null, feature: string | null = null): void {
-    this.store.transaction(() => {
+    this.tx(() => {
       const row = this.loadSubscriber(subscriberId);
       // Errors are part of the contract: only accepted from subscribers who agreed to it.
       if (!row.consent) return;
@@ -148,7 +160,7 @@ export class Service {
         throw new ServiceError(400, 'invalid_gate', (error as Error).message);
       }
     }
-    const row = this.store.transaction(() => {
+    const row = this.tx(() => {
       const existing = this.store.getFeature(key);
       if (existing) {
         const next: FeatureRow = {
@@ -194,7 +206,7 @@ export class Service {
    * channel is where evidence is collected. Otherwise the gate must pass unless forced.
    */
   promote(key: string, actor: string | null, force: boolean): { feature: FeatureView; gate: GateResult | null } {
-    return this.store.transaction(() => {
+    return this.tx(() => {
       const feature = this.requireFeature(key);
       const target = nextStage(this.config, feature.stage);
       if (target === null) {
@@ -210,7 +222,7 @@ export class Service {
 
   /** Moves a feature back one channel, or straight to `to` (e.g. "off" as a kill switch). */
   rollback(key: string, to: string | undefined, actor: string | null): FeatureView {
-    return this.store.transaction(() => {
+    return this.tx(() => {
       const feature = this.requireFeature(key);
       const target = to ?? previousStage(this.config, feature.stage);
       if (target === null) {
@@ -249,6 +261,34 @@ export class Service {
 
   // Internals
 
+  /** Runs `fn` in a store transaction and emits its events only if it commits. */
+  private tx<T>(fn: () => T): T {
+    const outer = this.pending;
+    this.pending = [];
+    let events: RipenEvent[];
+    let result: T;
+    try {
+      result = this.store.transaction(fn);
+      events = this.pending;
+    } finally {
+      this.pending = outer;
+    }
+    for (const event of events) {
+      for (const listener of this.listeners) {
+        try {
+          listener(event);
+        } catch (error) {
+          console.error('ripen event listener failed:', error);
+        }
+      }
+    }
+    return result;
+  }
+
+  private emit<T extends RipenEventType>(type: T, data: Extract<RipenEvent, { type: T }>['data']): void {
+    this.pending.push({ id: crypto.randomUUID(), type, at: this.now().toISOString(), data } as RipenEvent);
+  }
+
   /** Loads or creates a subscriber, records activity and applies the channel contract. */
   private loadSubscriber(id: string): SubscriberRow {
     const now = this.now();
@@ -277,6 +317,7 @@ export class Service {
         now,
       );
       if (!check.ok) {
+        this.emit('subscriber.demoted', { from: row.channel, to: check.demoteTo, reason: check.reason });
         row = { ...row, demoted_from: row.channel, demoted_reason: check.reason, channel: check.demoteTo, joined_at: at };
       }
       row = { ...row, last_seen_at: at };
@@ -330,6 +371,11 @@ export class Service {
       checks_json: gate && JSON.stringify(gate.checks),
       created_at: now,
     });
+    if (action === 'promote') {
+      this.emit('feature.promoted', { feature: feature.key, from: feature.stage, to: target, actor, forced, gate });
+    } else {
+      this.emit('feature.rolled_back', { feature: feature.key, from: feature.stage, to: target, actor });
+    }
     return this.featureView(next);
   }
 

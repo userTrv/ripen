@@ -16,4 +16,4 @@ Ripen is at 0.x: only the latest release gets fixes.
 - The **admin token** must stay secret. Anything that reveals it, bypasses it or lets the client key reach admin endpoints is in scope.
 - The release console's CSP and the server's path handling for `/dashboard/` are in scope.
 
-Deployment guidance is in [Self-hosting → Security](docs/guide/self-hosting.md#security).
+The [threat model](docs/threat-model.md) lists what Ripen protects, against whom, and the risks it leaves to the operator. Deployment guidance is in [Self-hosting → Security](docs/guide/self-hosting.md#security).

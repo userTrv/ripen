@@ -46,10 +46,13 @@ The [getting started guide](docs/guide/getting-started.md) walks through the who
 | [Concepts](docs/guide/concepts.md) | Channels, stages, the channel contract, the gate |
 | [Web SDK and components](docs/guide/web.md) | `@ripen/sdk`, `<ripen-channel-picker>`, `<ripen-feedback>` |
 | [Flutter and Dart](packages/sdk-dart/README.md) | The `ripen` Dart package |
+| [Desktop apps](docs/guide/desktop.md) | Electron and Tauri, update channels per Ripen channel |
 | [OpenFeature](docs/guide/openfeature.md) | Ripen behind the OpenFeature web SDK |
 | [CI and automation](docs/guide/ci.md) | CLI, GitHub Action, nightly promotion |
+| [Integrations](docs/guide/integrations.md) | Webhooks, Prometheus and OpenTelemetry metrics |
 | [Self-hosting](docs/guide/self-hosting.md) | Configuration, TLS, backups, security, privacy |
 | [Specification](docs/spec.md) | The model and the HTTP API |
+| [Threat model](docs/threat-model.md) | What Ripen protects, against whom, and what is left to you |
 | [Architecture decisions](docs/adr) | Why it is built this way |
 
 ## Packages

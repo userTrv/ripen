@@ -1,4 +1,5 @@
 import { isRecord } from '@ripen/core';
+import { renderMetrics } from './metrics.ts';
 import { GateFailedError, ServiceError, type Service } from './service.ts';
 
 /**
@@ -25,8 +26,21 @@ export interface ApiRequest {
 
 export interface ApiResponse {
   status: number;
-  /** JSON-serializable body, or null for an empty response. */
+  /** JSON-serializable body, null for an empty response, or text when `contentType` is set. */
   body: unknown;
+  /** Set for non-JSON responses such as `/metrics`; `body` is then a string. */
+  contentType?: string;
+}
+
+/** A handler result sent as plain text instead of JSON. */
+class Text {
+  readonly text: string;
+  readonly contentType: string;
+
+  constructor(text: string, contentType: string) {
+    this.text = text;
+    this.contentType = contentType;
+  }
 }
 
 export type ApiHandler = (request: ApiRequest) => Promise<ApiResponse>;
@@ -66,6 +80,7 @@ export function createApi(service: Service, options: ApiOptions): ApiHandler {
     try {
       const body = request.method === 'GET' ? {} : parseJson(request.body);
       const result = await route.handler({ params, body });
+      if (result instanceof Text) return { status: 200, body: result.text, contentType: result.contentType };
       return result === undefined ? { status: 204, body: null } : { status: 200, body: result };
     } catch (error) {
       if (error instanceof GateFailedError) {
@@ -91,6 +106,7 @@ function buildRoutes(service: Service): Route[] {
 
   return [
     route('GET', '/healthz', 'public', () => ({ ok: true })),
+    route('GET', '/metrics', 'admin', () => new Text(renderMetrics(service), 'text/plain; version=0.0.4; charset=utf-8')),
 
     route('POST', '/v1/client/session', 'client', ({ body }) => service.session(id(body, 'subscriberId'))),
     route('PUT', '/v1/client/subscribers/:id/channel', 'client', ({ params, body }) =>

@@ -7,3 +7,6 @@ export { createApi, type ApiHandler, type ApiOptions, type ApiRequest, type ApiR
 export { MemoryStore } from './memory-store.ts';
 export { GateFailedError, Service, ServiceError, type FeatureView, type HealthView, type SessionView } from './service.ts';
 export type { FeatureRow, HistoryRow, ReportView, RipenStore, SubscriberRow } from './storage.ts';
+export type { EventListener, RipenEvent, RipenEventType } from './events.ts';
+export { renderMetrics } from './metrics.ts';
+export { SIGNATURE_HEADER, createWebhookSender, signWebhook, verifyWebhook, type WebhookOptions, type WebhookSender } from './webhooks.ts';

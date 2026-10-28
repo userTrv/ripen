@@ -49,7 +49,7 @@ A feature moves to the next channel only when all checks pass. The defaults:
 | Share of "broken" pulses | at most 5% |
 | Error rate compared to people without the feature | at most ×1.5 |
 
-Pulses and errors can name the feature they are about. Those that name another feature do not count, so one broken feature does not hold back healthy ones in the same channel. The error comparison uses only people who agreed to send errors, in both groups.
+Pulses and errors can name the feature they are about. Those that name another feature do not count, so one broken feature does not hold back healthy ones in the same channel. The error comparison uses only people who agreed to send errors, in both groups. A person counts at most once a day for "works" and once for "broken", so tapping again does not add weight.
 
 The first step, from `off` to the earliest channel, needs no gate: that is where the evidence is collected. A person can force a promotion past a failed gate; the move is recorded in the history with their name ([ADR 6](../adr/0006-gate.md)).
 

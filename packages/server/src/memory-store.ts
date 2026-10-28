@@ -126,14 +126,14 @@ export class MemoryStore implements RipenStore {
   }
 
   countPulses(channels: string[], feature: string, since: number): { ok: number; broken: number } {
-    let ok = 0;
-    let broken = 0;
+    // One "ok" and one "broken" per subscriber and day, as in SQLite.
+    const ok = new Set<string>();
+    const broken = new Set<string>();
     for (const p of this.data.pulses) {
       if (p.at < since || !channels.includes(p.channel) || (p.feature !== null && p.feature !== feature)) continue;
-      if (p.status === 'ok') ok++;
-      else broken++;
+      (p.status === 'ok' ? ok : broken).add(`${p.subscriberId}|${Math.floor(p.at / DAY_MS)}`);
     }
-    return { ok, broken };
+    return { ok: ok.size, broken: broken.size };
   }
 
   errorRate(channels: string[], feature: string, since: number): number | null {
