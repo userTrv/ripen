@@ -45,3 +45,34 @@ jobs:
 
       - name: Build and check the action bundle
         run: pnpm build && node scripts/build-action.ts --check
+
+  image:
+    # The server image builds and starts; nothing is pushed.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        env:
+          TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+          SHA: ${{ github.sha }}
+        run: |
+          git init -q .
+          git remote add origin "$SERVER/$REPOSITORY.git"
+          auth="$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "$SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Build
+        run: docker build -t ripen:ci .
+
+      - name: Smoke test
+        run: |
+          docker run -d --name ripen -e RIPEN_CLIENT_KEY=smoke-client-key-0001 -e RIPEN_ADMIN_TOKEN=smoke-admin-token-0001 \
+            -p 127.0.0.1:4747:4747 ripen:ci
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4747/healthz && break; sleep 1; done
+          curl -fsS http://127.0.0.1:4747/dashboard/ >/dev/null
+          curl -fsS -H 'Authorization: Bearer smoke-admin-token-0001' http://127.0.0.1:4747/metrics | grep -q ripen_channel_subscribers
+          docker exec -e RIPEN_URL=http://127.0.0.1:4747 -e RIPEN_ADMIN_TOKEN=smoke-admin-token-0001 ripen ripen channels
+          docker rm -f ripen

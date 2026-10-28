@@ -4,7 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-28
+
 ### Added
+- Docker image for amd64 and arm64 on GitHub Container Registry: `ghcr.io/usertrv/ripen`. Releases are built by a workflow from this changelog; CI also builds and smoke-tests the image.
 - `ripen promote-ready`: promotes every feature whose gate passes; features that are off stay off.
 - GitHub Action (`action.yml`) running the bundled CLI, with no other actions and nothing to install.
 - Dart and Flutter SDK (`packages/sdk-dart`), no dependencies.
@@ -38,5 +41,6 @@ First version.
 - `@ripen/dashboard`: release console served at `/dashboard/`.
 - Docker image and the in-browser demo.
 
-[Unreleased]: https://github.com/userTrv/ripen/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/userTrv/ripen/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/userTrv/ripen/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/userTrv/ripen/releases/tag/v0.1.0

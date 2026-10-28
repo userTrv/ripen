@@ -48,3 +48,5 @@ pnpm demo             # builds the in-browser demo into apps/demo/site
 Small, focused commits in the [Conventional Commits](https://www.conventionalcommits.org) style (`feat(cli): …`, `fix(server): …`). Describe what changed and why in the pull request and how you tested it.
 
 By contributing you agree that your contributions are licensed under the [Apache-2.0](LICENSE) license.
+
+Maintainers: the release process is in [RELEASING.md](RELEASING.md).
