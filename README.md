@@ -48,6 +48,7 @@ The [getting started guide](docs/guide/getting-started.md) walks through the who
 | [Flutter and Dart](packages/sdk-dart/README.md) | The `ripen` Dart package |
 | [OpenFeature](docs/guide/openfeature.md) | Ripen behind the OpenFeature web SDK |
 | [CI and automation](docs/guide/ci.md) | CLI, GitHub Action, nightly promotion |
+| [Integrations](docs/guide/integrations.md) | Webhooks, Prometheus and OpenTelemetry metrics |
 | [Self-hosting](docs/guide/self-hosting.md) | Configuration, TLS, backups, security, privacy |
 | [Specification](docs/spec.md) | The model and the HTTP API |
 | [Architecture decisions](docs/adr) | Why it is built this way |

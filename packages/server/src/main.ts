@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { DEFAULT_CONFIG, parseConfig, type RipenConfig } from '@ripen/core';
+import type { RipenEventType } from './events.ts';
 import { createRipenServer } from './http.ts';
 import { Service } from './service.ts';
 import { Store } from './store.ts';
+import { createWebhookSender } from './webhooks.ts';
 
 /**
  * Configuration comes from environment variables, never from command-line
@@ -23,6 +25,21 @@ const server = createRipenServer(service, {
   corsOrigins: (env['RIPEN_CORS_ORIGINS'] ?? '*').split(',').map((s) => s.trim()).filter(Boolean),
   ...(env['RIPEN_DASHBOARD_DIR'] ? { dashboardDir: env['RIPEN_DASHBOARD_DIR'] } : {}),
 });
+
+// Optional webhook: every stored change worth knowing about, signed with the shared secret.
+const webhookUrl = env['RIPEN_WEBHOOK_URL'];
+if (webhookUrl) {
+  const url = parseWebhookUrl(webhookUrl);
+  const types = parseEventTypes(env['RIPEN_WEBHOOK_EVENTS']);
+  const sender = createWebhookSender({
+    url: url.href,
+    secret: requireSecret('RIPEN_WEBHOOK_SECRET'),
+    ...(types ? { types } : {}),
+    onFailure: (event, reason) => console.error(`webhook: gave up on ${event.type} ${event.id} to ${url.host}: ${reason}`),
+  });
+  service.onEvent((event) => sender.send(event));
+  console.log(`webhook: sending ${types ? types.join(', ') : 'all events'} to ${url.host}`);
+}
 
 // Optional retention: events older than this many days are deleted at start and daily.
 const retentionDays = env['RIPEN_RETENTION_DAYS'];
@@ -75,6 +92,39 @@ function loadConfig(path: string): RipenConfig {
     console.error(`${path}: ${(error as Error).message}`);
     process.exit(1);
   }
+}
+
+function parseWebhookUrl(value: string): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    console.error('RIPEN_WEBHOOK_URL must be an absolute URL');
+    process.exit(1);
+  }
+  // Plain HTTP would expose events on the way; it is allowed only to this machine.
+  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
+    console.error('RIPEN_WEBHOOK_URL must use https (http only for localhost)');
+    process.exit(1);
+  }
+  if (url.username || url.password) {
+    console.error('RIPEN_WEBHOOK_URL must not contain credentials; use RIPEN_WEBHOOK_SECRET');
+    process.exit(1);
+  }
+  return url;
+}
+
+function parseEventTypes(value: string | undefined): RipenEventType[] | null {
+  if (!value) return null;
+  const known: RipenEventType[] = ['feature.promoted', 'feature.rolled_back', 'report.created', 'subscriber.demoted'];
+  const types = value.split(',').map((s) => s.trim()).filter(Boolean);
+  const unknown = types.filter((t) => !known.includes(t as RipenEventType));
+  if (unknown.length > 0) {
+    console.error(`RIPEN_WEBHOOK_EVENTS: unknown ${unknown.join(', ')}; known: ${known.join(', ')}`);
+    process.exit(1);
+  }
+  return types as RipenEventType[];
 }
 
 function requireSecret(name: string): string {

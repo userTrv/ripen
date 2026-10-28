@@ -52,6 +52,9 @@ On Node.js 22 `node:sqlite` prints an "experimental" warning; the flag hides it.
 | `RIPEN_CORS_ORIGINS` | `*` | Comma-separated origins allowed to call the client API from browsers |
 | `RIPEN_DASHBOARD_DIR` | not set (`/app/dashboard`) | Directory of the built console, served at `/dashboard/` |
 | `RIPEN_RETENTION_DAYS` | not set: keep everything | Delete pulses, reports, errors and activity older than this many days, at start and daily |
+| `RIPEN_WEBHOOK_URL` | not set | Where to POST events; `https`, or `http` for localhost only. See [Integrations](integrations.md) |
+| `RIPEN_WEBHOOK_SECRET` | required with a URL | Signs webhook requests. At least 16 characters. Secret |
+| `RIPEN_WEBHOOK_EVENTS` | all | Comma-separated event types to send |
 | `HOST` | `127.0.0.1` (`0.0.0.0`) | Address to listen on |
 | `PORT` | `4747` | Port to listen on |
 
@@ -121,6 +124,8 @@ Rebuild the image and restart the container. The server migrates the database sc
 - **The client key is public.** It ships in apps and only lets a caller act as some subscriber: read features, choose a channel, send pulses, reports and errors. Rate-limit the client API at your proxy if you expect abuse.
 - **The admin token is a secret.** Keep it in your secret store and CI secrets. Rotate it by changing `RIPEN_ADMIN_TOKEN` and restarting; signed-in consoles will ask for the new one.
 - **The console** is served with `Content-Security-Policy: default-src 'self'`, talks only to its own server, and keeps the token in `sessionStorage` of the tab.
+- **Webhooks** are signed with `RIPEN_WEBHOOK_SECRET`; the URL must not carry credentials, and only its host appears in logs.
+- **Metrics** at `/metrics` need the admin token, like the rest of the admin API.
 - **Request limits**: bodies up to 64 KB, reports up to 4000 characters, errors up to 1000.
 - **Supply chain**: the server has no runtime dependencies; the image contains no npm packages.
 

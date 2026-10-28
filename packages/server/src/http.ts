@@ -45,7 +45,7 @@ export function createRipenServer(service: Service, options: HttpOptions): Serve
       return send(res, e.status, { error: e.code, message: e.message });
     }
     const response = await api({ method: req.method ?? 'GET', path: url.pathname, authorization: req.headers.authorization, body });
-    send(res, response.status, response.body);
+    send(res, response.status, response.body, response.contentType);
   });
 }
 
@@ -72,12 +72,17 @@ async function readBody(req: IncomingMessage): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-function send(res: ServerResponse, status: number, body: unknown): void {
+function send(res: ServerResponse, status: number, body: unknown, contentType?: string): void {
   res.statusCode = status;
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   if (body === null || status === 204) {
     res.end();
+    return;
+  }
+  if (contentType && typeof body === 'string') {
+    res.setHeader('Content-Type', contentType);
+    res.end(body);
     return;
   }
   res.setHeader('Content-Type', 'application/json; charset=utf-8');

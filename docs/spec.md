@@ -130,10 +130,37 @@ Choosing a channel stores the given `consent`. Choosing a channel with `consent:
 | `POST /v1/admin/features/:key/promote` | `{ actor?, force? }` | `{ feature, gate }` or `409 gate_failed` with `gate`, `409 already_everywhere` |
 | `POST /v1/admin/features/:key/rollback` | `{ to?, actor? }` | Feature, or `409 already_off`, `400 invalid_target` |
 | `GET /v1/admin/features/:key/history` | | Moves with actor, `forced` flag and gate checks |
+| `GET /metrics` | | Channel and feature health as Prometheus text (`text/plain; version=0.0.4`), admin token required. See [Events and metrics](#events-and-metrics) |
 
 ### Dashboard
 
 With `RIPEN_DASHBOARD_DIR` set, the server serves the built `@ripen/dashboard` at `GET /dashboard/` (and redirects `/dashboard` there). Only files inside that directory with known types are served, with `Content-Security-Policy: default-src 'self'`, so the page can talk only to this server. The admin token is entered in the page, kept in `sessionStorage` for the tab, and sent as a Bearer token to the admin API.
+
+### Events and metrics
+
+After a change is stored, the server emits an event:
+
+| Type | `data` |
+|---|---|
+| `feature.promoted` | `{ feature, from, to, actor, forced, gate }`; `gate` is null when leaving `off`, and a failed gate when forced |
+| `feature.rolled_back` | `{ feature, from, to, actor }` |
+| `report.created` | `{ id, feature, channel, message, appVersion }`; `context` is not included |
+| `subscriber.demoted` | `{ from, to, reason }`; no subscriber id |
+
+Every event is `{ id, type, at, data }` with a unique `id` and an ISO 8601 `at`.
+
+With `RIPEN_WEBHOOK_URL` set, events are POSTed to it as JSON, one at a time and in order, with headers `Ripen-Event` (type), `Ripen-Delivery` (event id) and `Ripen-Signature: t=<unix seconds>,v1=<hex>`, where `v1` is HMAC-SHA256 with `RIPEN_WEBHOOK_SECRET` over `<t>.<raw body>`. Receivers should check the signature, reject a `t` more than five minutes away from their clock, and ignore an `id` they have already processed. Network errors, timeouts (10 s), `408`, `429` and `5xx` are retried after 1 s, 10 s and 60 s; other responses are final. Redirects are not followed. The queue is in memory and holds up to 1000 events: delivery is at least once while the process runs, and events are lost if it stops. `RIPEN_WEBHOOK_EVENTS` limits the types sent.
+
+`GET /metrics` reports gauges for each feature's current stage, matching what the gate sees:
+
+| Metric | Labels | Value |
+|---|---|---|
+| `ripen_channel_subscribers` | `channel` | Subscribers in the channel |
+| `ripen_feature_stage` | `feature`, `stage` | Index of the stage: 0 for `off`, then channels in order |
+| `ripen_feature_days_in_stage` | `feature` | Days since the feature entered its stage |
+| `ripen_feature_pulses` | `feature`, `status` | Pulses `ok` and `broken` from channels that have the feature |
+| `ripen_feature_error_rate` | `feature`, `group` | Errors per active consenting subscriber, `with` and `without` the feature; absent when nobody counts |
+| `ripen_feature_gate_pass` | `feature` | 1 if the gate to the next channel passes now, 0 if not; absent at `off` and at the last channel |
 
 ### Limits
 

@@ -20,7 +20,7 @@ const server = createRipenServer(new Service(DEFAULT_CONFIG, new Store('ripen.db
 server.listen(4747);
 ```
 
-`@ripen/server/engine` has no Node.js imports: the service, the API as a function (`createApi(service, options)(request)`) and `MemoryStore`. Use it in edge runtimes, tests or a browser.
+`@ripen/server/engine` has no Node.js imports: the service, the API as a function (`createApi(service, options)(request)`) and `MemoryStore`. Use it in edge runtimes, tests or a browser. It also exports `verifyWebhook()` for receivers of Ripen webhooks, `createWebhookSender()` and `renderMetrics()`; see [Integrations](https://github.com/userTrv/ripen/blob/main/docs/guide/integrations.md).
 
 ## License
 
