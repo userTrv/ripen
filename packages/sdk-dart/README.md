@@ -28,6 +28,8 @@ await ripen.pulse(ok: false, feature: 'new-editor');
 await ripen.report('Undo loses the last word', feature: 'new-editor');
 ```
 
+Without network, `pulse`, `report` and `captureError` keep the event in the storage (up to 50, for 7 days) instead of failing; `report` then returns `null` instead of the id. The queue is sent on the next `start()`, or call `ripen.flush()` when your connectivity listener sees the network come back. `start()` and `setChannel()` throw `RipenNetworkException` without network. Turn the queue off with `offlineQueue: false`.
+
 `ripen.changes` emits a `Session` after `start()` and every channel switch, so a Flutter widget can rebuild with a `StreamBuilder`. `ripen.channels` lists every channel with its contract (`requiresConsent`, `contract.pulseEveryDays`) for a settings screen.
 
 ### Errors in Flutter

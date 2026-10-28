@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:ripen/ripen.dart';
+import 'package:ripen/src/transport_io.dart';
 
 const clientKey = 'dart-test-client-key';
 const adminToken = 'dart-test-admin-token';
@@ -88,7 +89,7 @@ Future<void> _run(Uri base) async {
   await ripen.pulse(ok: false, feature: 'new-editor');
   await ripen.pulse(ok: true);
   final reportId = await ripen.report('Undo loses the last word', feature: 'new-editor', context: {'screen': 'editor'});
-  check(reportId > 0, 'report returns its id');
+  check(reportId != null && reportId > 0, 'report returns its id');
   try {
     throw StateError('editor state lost');
   } catch (error, stack) {
@@ -116,7 +117,44 @@ Future<void> _run(Uri base) async {
   }
   await wrong.close();
 
+  // Offline: events are queued in storage and sent once the network is back.
+  final switchable = _SwitchableTransport();
+  final offline = Ripen(url: base, clientKey: clientKey, storage: MemoryStorage(), transport: switchable);
+  await offline.start();
+  await offline.setChannel('early', consent: true);
+  switchable.online = false;
+  await offline.pulse(ok: true, feature: 'new-editor');
+  check(await offline.report('Written on a plane', feature: 'new-editor') == null, 'a report without network is queued');
+  check(await offline.queued() == 2, 'two events wait in the queue');
+  try {
+    await offline.start();
+    check(false, 'loading the session without network must fail');
+  } on RipenNetworkException {
+    check(true, 'loading the session without network fails with RipenNetworkException');
+  }
+  switchable.online = true;
+  await offline.flush();
+  check(await offline.queued() == 0, 'the queue is sent once online');
+  final after = await _admin(base, 'GET', '/v1/admin/features/new-editor/health');
+  final afterHealth = after['health'] as Map<String, Object?>;
+  final afterReports = (after['recentReports'] as List).cast<Map<String, Object?>>();
+  check(afterHealth['pulsesOk'] == 2 && afterReports.any((r) => r['message'] == 'Written on a plane'), 'queued events reach the server');
+  await offline.close();
+  switchable.inner.close();
+
   await ripen.close();
+}
+
+/// Real HTTP that can be switched off, as a phone in flight mode.
+class _SwitchableTransport extends RipenTransport {
+  final inner = IoTransport();
+  bool online = true;
+
+  @override
+  Future<TransportResponse> send(String method, Uri url, Map<String, String> headers, String body) {
+    if (!online) throw const SocketException('network is unreachable');
+    return inner.send(method, url, headers, body);
+  }
 }
 
 Future<Map<String, Object?>> _admin(Uri base, String method, String path, [Map<String, Object?>? body]) async {

@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+- Offline queue in the JavaScript and Dart SDKs: pulses, reports and errors sent without network are kept in storage (up to 50, for 7 days) and sent on the next start, when the browser is back online, or on `flush()`. Network failures throw `RipenNetworkError` / `RipenNetworkException`.
+
+### Changed
+- `report()` returns `{ id: null, queued: true }` (JavaScript) or `null` (Dart) when the report was queued offline.
+
 ## [0.2.0] - 2026-10-28
 
 ### Added

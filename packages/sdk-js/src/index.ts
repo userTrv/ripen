@@ -31,6 +31,9 @@ export interface KeyValueStorage {
   setItem(key: string, value: string): void;
 }
 
+/** What `report()` resolves to: the stored report, or a report kept to send once online. */
+export type ReportResult = { id: number; queued?: false } | { id: null; queued: true };
+
 export interface RipenOptions {
   /** Base URL of the Ripen server. */
   url: string;
@@ -42,6 +45,12 @@ export interface RipenOptions {
   storage?: KeyValueStorage;
   /** Version of the host app, attached to pulses, reports and errors. */
   appVersion?: string;
+  /**
+   * Keep pulses, reports and errors that fail for lack of network, and send them
+   * on the next `start()`, when the browser comes back online, or on `flush()`.
+   * Kept in `storage` (up to 50 for 7 days). Default: true.
+   */
+  offlineQueue?: boolean;
   fetch?: typeof fetch;
 }
 
@@ -60,6 +69,20 @@ export class RipenError extends Error {
 type Listener = (session: Session) => void;
 
 const STORAGE_KEY = 'ripen.subscriberId';
+const OUTBOX_KEY = 'ripen.outbox';
+const OUTBOX_MAX = 50;
+const OUTBOX_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+interface OutboxItem {
+  path: string;
+  body: Record<string, unknown>;
+  at: number;
+}
+
+/** A request that never reached the server: offline, DNS, refused connection. */
+export class RipenNetworkError extends Error {
+  override name = 'RipenNetworkError';
+}
 
 export class Ripen {
   private readonly url: string;
@@ -68,6 +91,11 @@ export class Ripen {
   private readonly listeners = new Set<Listener>();
   private current: Session | null = null;
   private removeErrorHandlers: (() => void) | null = null;
+  private readonly storage: KeyValueStorage | null;
+  /** Used when there is no storage, or it is blocked. */
+  private memoryOutbox: OutboxItem[] = [];
+  private flushing: Promise<void> | null = null;
+  private watchingOnline = false;
   readonly subscriberId: string;
 
   constructor(options: RipenOptions) {
@@ -76,12 +104,47 @@ export class Ripen {
     const fetchFn = options.fetch ?? globalThis.fetch;
     if (!fetchFn) throw new Error('fetch is not available, pass options.fetch');
     this.fetchFn = fetchFn.bind(globalThis);
-    this.subscriberId = options.subscriberId ?? resolveSubscriberId(options.storage ?? defaultStorage());
+    this.storage = options.storage ?? defaultStorage();
+    this.subscriberId = options.subscriberId ?? resolveSubscriberId(this.storage);
   }
 
-  /** Loads the session: the subscriber's channel and which features are enabled. */
+  /** Loads the session: the subscriber's channel and which features are enabled. Then sends anything queued offline. */
   async start(): Promise<Session> {
-    return this.setSession(await this.request<Session>('POST', '/v1/client/session', { subscriberId: this.subscriberId }));
+    const session = this.setSession(await this.request<Session>('POST', '/v1/client/session', { subscriberId: this.subscriberId }));
+    if (this.options.offlineQueue !== false) {
+      this.watchOnline();
+      void this.flush();
+    }
+    return session;
+  }
+
+  /** How many pulses, reports and errors wait to be sent. */
+  get queued(): number {
+    return this.readOutbox().length;
+  }
+
+  /**
+   * Sends what was queued offline, oldest first. Stops at the first network
+   * failure; drops items the server rejects, since they would be rejected again.
+   */
+  flush(): Promise<void> {
+    this.flushing ??= (async () => {
+      try {
+        for (;;) {
+          const [item] = this.readOutbox();
+          if (!item) return;
+          try {
+            await this.request('POST', item.path, item.body);
+          } catch (error) {
+            if (error instanceof RipenNetworkError || (error instanceof RipenError && error.status >= 500)) return;
+          }
+          this.writeOutbox(this.readOutbox().filter((i) => i.at !== item.at || i.path !== item.path));
+        }
+      } finally {
+        this.flushing = null;
+      }
+    })();
+    return this.flushing;
   }
 
   get session(): Session | null {
@@ -113,12 +176,12 @@ export class Ripen {
 
   /** One-tap signal: everything works, or something is broken. Optionally about one feature. */
   async pulse(status: 'ok' | 'broken', { feature }: { feature?: string } = {}): Promise<void> {
-    await this.request('POST', '/v1/client/pulses', { subscriberId: this.subscriberId, status, feature, appVersion: this.options.appVersion });
+    await this.send('/v1/client/pulses', { subscriberId: this.subscriberId, status, feature, appVersion: this.options.appVersion });
   }
 
   /** A written report. `context` is any JSON object the app wants to attach; avoid personal data. */
-  async report(message: string, { feature, context }: { feature?: string; context?: Record<string, unknown> } = {}): Promise<{ id: number }> {
-    return this.request('POST', '/v1/client/reports', {
+  async report(message: string, { feature, context }: { feature?: string; context?: Record<string, unknown> } = {}): Promise<ReportResult> {
+    return this.send<{ id: number }>('/v1/client/reports', {
       subscriberId: this.subscriberId,
       message,
       feature,
@@ -134,7 +197,7 @@ export class Ripen {
   async captureError(error: unknown, { feature }: { feature?: string } = {}): Promise<void> {
     if (!this.current?.subscriber.consent) return;
     const { message, fingerprint } = describeError(error);
-    await this.request('POST', '/v1/client/errors', {
+    await this.send('/v1/client/errors', {
       subscriberId: this.subscriberId,
       fingerprint,
       message,
@@ -175,12 +238,62 @@ export class Ripen {
     return session;
   }
 
+  /** Posts an event; without network, queues it instead of failing (unless the queue is off). */
+  private async send<T>(path: string, body: Record<string, unknown>): Promise<T | { id: null; queued: true }> {
+    try {
+      return await this.request<T>('POST', path, body);
+    } catch (error) {
+      if (!(error instanceof RipenNetworkError) || this.options.offlineQueue === false) throw error;
+      const outbox = this.readOutbox();
+      // Distinct timestamps keep items apart when removing them after sending.
+      const at = Math.max(Date.now(), (outbox.at(-1)?.at ?? 0) + 1);
+      this.writeOutbox([...outbox, { path, body, at }].slice(-OUTBOX_MAX));
+      this.watchOnline();
+      return { id: null, queued: true };
+    }
+  }
+
+  private readOutbox(): OutboxItem[] {
+    let items = this.memoryOutbox;
+    try {
+      const raw = this.storage?.getItem(OUTBOX_KEY);
+      if (raw) items = JSON.parse(raw) as OutboxItem[];
+    } catch {
+      // Blocked storage or a damaged value: use the in-memory copy.
+    }
+    const fresh = Date.now() - OUTBOX_MAX_AGE_MS;
+    return Array.isArray(items) ? items.filter((i) => i && typeof i.path === 'string' && i.at >= fresh) : [];
+  }
+
+  private writeOutbox(items: OutboxItem[]): void {
+    this.memoryOutbox = items;
+    try {
+      this.storage?.setItem(OUTBOX_KEY, JSON.stringify(items));
+    } catch {
+      // Kept in memory only.
+    }
+  }
+
+  /** In browsers, sends the queue when the connection comes back. */
+  private watchOnline(): void {
+    if (this.watchingOnline) return;
+    const target = globalThis as unknown as Partial<Pick<Window, 'addEventListener'>>;
+    if (typeof target.addEventListener !== 'function') return;
+    this.watchingOnline = true;
+    target.addEventListener('online', () => void this.flush());
+  }
+
   private async request<T>(method: string, path: string, body: unknown): Promise<T> {
-    const response = await this.fetchFn(this.url + path, {
-      method,
-      headers: { Authorization: `Bearer ${this.options.clientKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    let response: Response;
+    try {
+      response = await this.fetchFn(this.url + path, {
+        method,
+        headers: { Authorization: `Bearer ${this.options.clientKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new RipenNetworkError((error as Error).message);
+    }
     if (response.status === 204) return undefined as T;
     const data = (await response.json().catch(() => null)) as { error?: string; message?: string } | null;
     if (!response.ok) {
