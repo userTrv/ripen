@@ -7,6 +7,8 @@
    ```bash
    git tag -a vX.Y.Z -m vX.Y.Z && git push origin vX.Y.Z
    ```
+   Or start the [release workflow](.github/workflows/release.yml) by hand on `main` (Actions → Release → Run workflow) with the version and, optionally, the commit; it then creates the tag itself.
+
    The [release workflow](.github/workflows/release.yml) builds the image for amd64 and arm64, smoke-tests it, pushes `ghcr.io/usertrv/ripen:X.Y.Z` (and `latest` for versions without a `-suffix`) and creates the GitHub release with the changelog section as notes.
 
 The npm and pub packages are not published yet. When they are, publishing should use npm trusted publishing (OIDC from the workflow, no long-lived token) and provenance.

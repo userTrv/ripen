@@ -1,18 +1,41 @@
 name: Release
 
-# On a version tag: builds the server image for amd64 and arm64 natively,
-# pushes it to GitHub Container Registry and creates a GitHub release with the
-# notes from CHANGELOG.md. No third-party actions: git, docker and gh come with
-# the runner images.
+# On a version tag, or started by hand with a version: builds the server image
+# for amd64 and arm64 natively, pushes it to GitHub Container Registry and
+# creates a GitHub release (and the tag, when started by hand) with the notes
+# from CHANGELOG.md. No third-party actions: git, docker and gh come with the
+# runner images.
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without "v", e.g. 0.2.0
+        required: true
+      target:
+        description: Commit to release (full SHA); the head of the chosen branch when empty
+        required: false
 
 permissions:
   contents: read
 
+env:
+  TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
+  TARGET: ${{ inputs.target || github.sha }}
+
 jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Check the version and the commit
+        run: |
+          printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' || { echo "bad version: $TAG"; exit 1; }
+          printf '%s' "$TARGET" | grep -Eq '^[0-9a-f]{40}$' || { echo "target must be a full commit SHA"; exit 1; }
+
   image:
+    needs: validate
     strategy:
       matrix:
         include:
@@ -25,33 +48,30 @@ jobs:
     timeout-minutes: 20
     env:
       REPOSITORY: ${{ github.repository }}
-      TAG: ${{ github.ref_name }}
     steps:
       - name: Check out
         # Plain git instead of actions/checkout; the token is not stored.
         env:
           TOKEN: ${{ github.token }}
           SERVER: ${{ github.server_url }}
-          SHA: ${{ github.sha }}
         run: |
           git init -q .
           git remote add origin "$SERVER/$REPOSITORY.git"
           auth="$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
-          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "$SHA"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "$TARGET"
           git checkout -q FETCH_HEAD
 
       - name: Build
         env:
           ARCH: ${{ matrix.arch }}
           SERVER: ${{ github.server_url }}
-          SHA: ${{ github.sha }}
         run: |
           image="ghcr.io/$(printf '%s' "$REPOSITORY" | tr '[:upper:]' '[:lower:]')"
           echo "IMAGE=$image" >> "$GITHUB_ENV"
           docker build \
             --label "org.opencontainers.image.source=$SERVER/$REPOSITORY" \
             --label "org.opencontainers.image.version=${TAG#v}" \
-            --label "org.opencontainers.image.revision=$SHA" \
+            --label "org.opencontainers.image.revision=$TARGET" \
             --label "org.opencontainers.image.licenses=Apache-2.0" \
             -t "$image:${TAG#v}-$ARCH" .
 
@@ -89,7 +109,6 @@ jobs:
           TOKEN: ${{ github.token }}
           ACTOR: ${{ github.actor }}
           REPOSITORY: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
         run: |
           image="ghcr.io/$(printf '%s' "$REPOSITORY" | tr '[:upper:]' '[:lower:]')"
           version="${TAG#v}"
@@ -111,9 +130,10 @@ jobs:
     timeout-minutes: 5
     env:
       REPOSITORY: ${{ github.repository }}
-      TAG: ${{ github.ref_name }}
     steps:
       - name: Check out
+        # The notes come from CHANGELOG.md of the workflow's own commit, which may
+        # be newer than the released one.
         env:
           TOKEN: ${{ github.token }}
           SERVER: ${{ github.server_url }}
@@ -142,4 +162,5 @@ jobs:
           printf '\n### Docker image\n\n```\ndocker pull %s:%s\n```\n' "$image" "$version" >> notes.md
           prerelease=""
           case "$version" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "$TAG" --repo "$REPOSITORY" --title "$TAG" --notes-file notes.md --verify-tag $prerelease
+          # Creates the tag at the released commit when it does not exist yet.
+          gh release create "$TAG" --repo "$REPOSITORY" --title "$TAG" --notes-file notes.md --target "$TARGET" $prerelease
