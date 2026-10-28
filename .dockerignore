@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+apps/demo/site
+.git
+.env
+.env.*
+*.db
+*.db-*
+*.pem
+*.key

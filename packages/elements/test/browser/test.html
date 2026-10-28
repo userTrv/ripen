@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ripen elements browser test</title>
+  <script type="importmap">
+    { "imports": { "@ripen/sdk": "/sdk/index.js", "@ripen/elements": "/elements/index.js" } }
+  </script>
+</head>
+<body>
+  <ripen-channel-picker></ripen-channel-picker>
+  <ripen-feedback></ripen-feedback>
+  <ripen-feedback feature="search-v2"></ripen-feedback>
+
+  <script type="module">
+    import { createRipen } from '@ripen/sdk';
+    import { defineRipenElements } from '@ripen/elements';
+
+    const params = new URLSearchParams(location.search);
+    const steps = [];
+
+    function check(condition, message) {
+      if (!condition) throw new Error(message);
+      steps.push(message);
+    }
+
+    async function waitFor(predicate, message, timeout = 3000) {
+      const start = performance.now();
+      while (performance.now() - start < timeout) {
+        const value = predicate();
+        if (value) {
+          steps.push(message);
+          return value;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      throw new Error(`timed out: ${message}`);
+    }
+
+    async function run() {
+      defineRipenElements();
+      defineRipenElements(); // registering twice must be harmless
+
+      const ripen = createRipen({ url: params.get('api'), clientKey: params.get('key'), subscriberId: 'browser-1', appVersion: '1.2.3' });
+      const picker = document.querySelector('ripen-channel-picker');
+      const [general, search] = document.querySelectorAll('ripen-feedback');
+      picker.ripen = ripen;
+      general.ripen = ripen;
+      search.ripen = ripen;
+
+      const p = picker.shadowRoot;
+      await waitFor(() => p.querySelectorAll('input[type=radio]').length === 3, 'picker shows three channels');
+      check(p.querySelector('input[value=regular]').checked, 'regular is selected by default');
+      check(p.querySelector('label.option').textContent.includes('Errors are sent automatically'), 'early channel lists its contract');
+
+      // A channel without a contract is applied immediately.
+      const events = [];
+      picker.addEventListener('ripen-channel-change', (e) => events.push(e.detail.channel));
+      p.querySelector('input[value=calm]').click();
+      await waitFor(() => ripen.session.subscriber.channel === 'calm', 'switching to calm needs no consent');
+      check(events.at(-1) === 'calm', 'ripen-channel-change event fired');
+
+      // A telemetry channel asks for consent first.
+      p.querySelector('input[value=early]').click();
+      const consent = await waitFor(() => p.querySelector('#consent'), 'early asks for consent');
+      const join = () => p.querySelector('button.primary');
+      check(join().disabled, 'join is disabled without consent');
+      check(ripen.session.subscriber.channel === 'calm', 'nothing changes before consent');
+      consent.click();
+      await waitFor(() => !join().disabled, 'consent enables join');
+      join().click();
+      await waitFor(() => ripen.session.subscriber.channel === 'early' && ripen.session.subscriber.consent, 'joined early with consent');
+      await waitFor(() => p.querySelector('[role=status]')?.textContent === 'Saved', 'status says saved');
+
+      // Russian texts can be swapped in at runtime.
+      const { RU } = await import('@ripen/elements');
+      picker.texts = RU;
+      check(p.querySelector('legend').textContent === RU.pickerTitle, 'texts can be replaced');
+
+      // One-tap pulse.
+      const g = general.shadowRoot;
+      g.querySelector('[part~=button-works]').click();
+      await waitFor(() => g.textContent.includes('Thank you!'), 'ok pulse shows thanks');
+
+      // Broken pulse, then a written report about one feature.
+      const s = search.shadowRoot;
+      s.querySelector('[part~=button-broken]').click();
+      const textarea = await waitFor(() => s.querySelector('textarea'), 'broken asks for details');
+      check(s.querySelector('button.primary').disabled, 'send is disabled while empty');
+      textarea.value = 'Quoted phrases return <b>nothing</b>';
+      textarea.dispatchEvent(new Event('input'));
+      check(!s.querySelector('button.primary').disabled, 'typing enables send');
+      s.querySelector('button.primary').click();
+      await waitFor(() => s.textContent.includes('Thank you!'), 'report shows thanks');
+    }
+
+    run()
+      .then(() => ({ ok: true, steps }))
+      .catch((error) => ({ ok: false, steps, error: String(error && error.stack || error) }))
+      .then((result) => fetch(params.get('report'), { method: 'POST', body: JSON.stringify(result) }));
+  </script>
+</body>
+</html>

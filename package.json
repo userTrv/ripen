@@ -1,0 +1,27 @@
+{
+  "name": "ripen-monorepo",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --conditions=ripen-source --disable-warning=ExperimentalWarning --test \"packages/*/test/**/*.test.ts\"",
+    "typecheck": "tsc -b",
+    "build": "pnpm clean && tsc -b packages/core packages/server packages/sdk-js packages/elements packages/cli packages/openfeature packages/dashboard apps/demo && cp packages/dashboard/public/index.html packages/dashboard/dist/",
+    "dev:server": "RIPEN_DASHBOARD_DIR=packages/dashboard/dist node --conditions=ripen-source --disable-warning=ExperimentalWarning packages/server/src/main.ts",
+    "clean": "rm -rf packages/*/dist packages/*/tsconfig.tsbuildinfo apps/*/dist apps/*/tsconfig.tsbuildinfo apps/demo/site",
+    "test:browser": "pnpm build && node --conditions=ripen-source --disable-warning=ExperimentalWarning scripts/browser-test.ts",
+    "demo": "pnpm build && node scripts/build-demo.ts"
+  },
+  "devDependencies": {
+    "@ripen/cli": "workspace:*",
+    "@ripen/core": "workspace:*",
+    "@ripen/sdk": "workspace:*",
+    "@ripen/server": "workspace:*",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  },
+  "packageManager": "pnpm@10.33.4+sha512.1c67b3b359b2d408119ba1ed289f34b8fc3c6873412bec6fd264fbdc82489e510fcbecb9ce9d22dae7f3b76269d8441046014bdca53b9979cd7a561ad631b800"
+}

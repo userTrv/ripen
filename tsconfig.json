@@ -1,0 +1,29 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/server"
+    },
+    {
+      "path": "packages/sdk-js"
+    },
+    {
+      "path": "packages/elements"
+    },
+    {
+      "path": "packages/cli"
+    },
+    {
+      "path": "apps/demo"
+    },
+    {
+      "path": "packages/openfeature"
+    },
+    {
+      "path": "packages/dashboard"
+    }
+  ]
+}

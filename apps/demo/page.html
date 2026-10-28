@@ -1,0 +1,194 @@
+<title>Ripen Live Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Ripen running in your browser: pick a channel, watch a simulated crowd send pulses, promote features through the gate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a header strip, then the user's phone on the left and the team's release console on the right; one column on phones. */
+  :root {
+    --bg: #f3f5f1;
+    --surface: #ffffff;
+    --ink: #18211c;
+    --muted: #5d6a62;
+    --line: #d9dfd8;
+    --early: #4f8f2f;
+    --regular: #b7860f;
+    --calm: #7b3d6b;
+    --off: #8a948d;
+    --good: #2f7d4a;
+    --bad: #b23a2e;
+    --phone: #101512;
+    --phone-screen: #fbfcfa;
+    --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+    --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111613; --surface: #19201c; --ink: #e6ece7; --muted: #9aa69e; --line: #2c3530;
+      --early: #7cc25a; --regular: #e2b23c; --calm: #c27fb1; --off: #7d8881; --good: #6cc48a; --bad: #ef7a6c;
+      --phone: #050706; --phone-screen: #1d2420; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111613; --surface: #19201c; --ink: #e6ece7; --muted: #9aa69e; --line: #2c3530;
+    --early: #7cc25a; --regular: #e2b23c; --calm: #c27fb1; --off: #7d8881; --good: #6cc48a; --bad: #ef7a6c;
+    --phone: #050706; --phone-screen: #1d2420; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 24px 48px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  code, .mono { font-family: var(--mono); font-size: 0.85em; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* Header */
+  .intro { display: grid; gap: 10px; max-width: 760px; }
+  .intro h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+  .intro h1 .ripe { background: linear-gradient(90deg, var(--early), var(--regular) 55%, var(--calm)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .intro p { margin: 0; color: var(--muted); max-width: 65ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 0.9em; }
+
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 0.82em; font-weight: 500; border: 1px solid currentColor; white-space: nowrap; }
+  .chip b { font-variant-numeric: tabular-nums; }
+  .chip-early { color: var(--early); }
+  .chip-regular { color: var(--regular); }
+  .chip-calm { color: var(--calm); }
+
+  .stage { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px; align-items: start; }
+  @media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+  .label { font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin: 0 0 10px; }
+
+  /* Phone */
+  .user { display: grid; gap: 16px; }
+  .phone { background: var(--phone); border-radius: 34px; padding: 12px; max-width: 340px; width: 100%; box-shadow: 0 18px 40px -24px rgb(0 0 0 / 0.5); }
+  #phone-screen { background: var(--phone-screen); border-radius: 24px; padding: 16px; min-height: 330px; display: grid; gap: 12px; align-content: start; transition: background 0.3s, color 0.3s; color: var(--ink); }
+  #phone-screen.focus { background: #1f2622; color: #e8eee9; }
+  .app-bar { display: flex; justify-content: space-between; align-items: center; font-family: var(--display); font-size: 1.1em; }
+  .search { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 0.9em; }
+  .search.muted { color: var(--muted); }
+  .notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .notes li { display: grid; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, currentColor 6%, transparent); }
+  .note-title { font-weight: 600; }
+  .note-body { font-size: 0.85em; opacity: 0.75; }
+  .pin { color: var(--regular); font-weight: 500; font-size: 0.8em; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tool { font-size: 0.8em; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent); }
+  .tool.new { margin-left: auto; }
+  #phone-caption { margin: 0; color: var(--muted); font-size: 0.9em; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  ripen-channel-picker, ripen-feedback { --ripen-accent: var(--early); --ripen-border: var(--line); --ripen-muted: var(--muted); --ripen-radius: 12px; }
+
+  /* Console */
+  .console { display: grid; gap: 16px; min-width: 0; }
+  .console-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .clock { display: flex; align-items: baseline; gap: 12px; }
+  #day { font-family: var(--display); font-size: 1.6em; font-variant-numeric: tabular-nums; }
+  #crowd { display: flex; flex-wrap: wrap; gap: 6px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  .controls button, .actions button { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  button.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  button.ghost { border-style: dashed; color: var(--bad); }
+  button:disabled { opacity: 0.45; cursor: default; }
+
+  #features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+  .feature { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 12px; align-content: start; }
+  .feature header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+  .feature h3 { font-size: 1.15em; font-weight: 700; }
+  .feature code { color: var(--muted); }
+  .verdict { font-size: 0.78em; font-weight: 600; padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
+  .verdict.pass { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+  .verdict.fail { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+
+  .track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.75em; }
+  .track li { padding-top: 8px; border-top: 4px solid var(--line); color: var(--muted); }
+  .track li.reached.early { border-color: var(--early); }
+  .track li.reached.regular { border-color: var(--regular); }
+  .track li.reached.calm { border-color: var(--calm); }
+  .track li.current { color: var(--ink); font-weight: 600; }
+  .track li.off.current { border-color: var(--off); }
+
+  .feature-body { display: grid; gap: 8px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 0.88em; }
+  .stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 0.86em; }
+  .checks li { display: flex; gap: 8px; }
+  .checks .mark { font-weight: 700; width: 1em; flex: none; }
+  .checks .pass .mark { color: var(--good); }
+  .checks .fail { color: var(--bad); }
+  .hint { margin: 0; font-size: 0.86em; color: var(--muted); }
+  .report { margin: 0; font-size: 0.86em; font-style: italic; }
+  .report span { font-style: normal; color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.86em; max-height: 220px; overflow: auto; }
+  .log li { display: flex; gap: 10px; }
+  .log-day { font-family: var(--mono); color: var(--muted); flex: none; width: 2.6em; }
+  .log .good { color: var(--good); }
+  .log .bad { color: var(--bad); }
+
+  footer { color: var(--muted); font-size: 0.85em; }
+  footer a { color: inherit; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<script type="importmap">
+  {
+    "imports": {
+      "@ripen/core": "./lib/core/index.js",
+      "@ripen/server/engine": "./lib/server/engine.js",
+      "@ripen/sdk": "./lib/sdk/index.js",
+      "@ripen/elements": "./lib/elements/index.js"
+    }
+  }
+</script>
+
+<div class="wrap">
+  <header class="intro">
+    <h1>Let features <span class="ripe">ripen</span> before everyone gets them</h1>
+    <p>This page runs a real Ripen server in your browser with 160 simulated people. Pick your own channel on the phone, let days pass, and promote features through the gate. Nothing leaves the page.</p>
+    <div class="legend"><span class="chip chip-early">Early</span> new features first, sends feedback <span class="chip chip-regular">Regular</span> the default <span class="chip chip-calm">Calm</span> only proven features</div>
+  </header>
+
+  <main class="stage">
+    <section class="user" aria-labelledby="user-title">
+      <h2 class="label" id="user-title">You, in the app</h2>
+      <div class="phone"><div id="phone-screen" aria-live="polite"></div></div>
+      <p id="phone-caption"></p>
+      <div class="panel"><ripen-channel-picker></ripen-channel-picker></div>
+      <div class="panel"><ripen-feedback></ripen-feedback></div>
+    </section>
+
+    <section class="console" aria-labelledby="console-title">
+      <h2 class="label" id="console-title">The team, in the release console</h2>
+      <div class="console-bar">
+        <div class="clock"><span id="day">Day 0</span><div id="crowd"></div></div>
+        <div class="controls">
+          <button type="button" id="next-day" class="primary">Next day</button>
+          <button type="button" id="next-week">Next 7 days</button>
+          <button type="button" id="reset">Start over</button>
+        </div>
+      </div>
+      <div id="features"></div>
+      <div class="panel">
+        <h3 class="label">What happened</h3>
+        <ul class="log" id="log"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>Ripen is open source (Apache-2.0): <a href="https://github.com/userTrv/ripen">github.com/userTrv/ripen</a>. The gate needs 3 days in a channel, 20 pulses, at most 5% broken and no more than 1.5× the errors of people without the feature.</footer>
+</div>
+
+<script type="module" src="./lib/demo/main.js"></script>

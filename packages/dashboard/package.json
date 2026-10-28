@@ -1,0 +1,18 @@
+{
+  "name": "@ripen/dashboard",
+  "version": "0.1.0",
+  "description": "Ripen release console: channels, features, gates, promotion and rollback. A web component, no dependencies.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "ripen-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "public"
+  ]
+}
