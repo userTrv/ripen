@@ -76,3 +76,49 @@ jobs:
           curl -fsS -H 'Authorization: Bearer smoke-admin-token-0001' http://127.0.0.1:4747/metrics | grep -q ripen_channel_subscribers
           docker exec -e RIPEN_URL=http://127.0.0.1:4747 -e RIPEN_ADMIN_TOKEN=smoke-admin-token-0001 ripen ripen channels
           docker rm -f ripen
+
+  dart:
+    # The Dart SDK against a real server. Node.js and Dart are official builds,
+    # checked against the hashes below before use.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NODE_VERSION: 22.23.3 # published 2026-09-23
+      NODE_SHA256: df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de
+      DART_VERSION: 3.13.5
+      DART_SHA256: ea864bc64df30a6b8bdf30b2e32550f7717d9a890de8f40293aeabb924fe232b
+    steps:
+      - name: Check out
+        env:
+          TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+          SHA: ${{ github.sha }}
+        run: |
+          git init -q .
+          git remote add origin "$SERVER/$REPOSITORY.git"
+          auth="$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "$SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Install Node.js and Dart
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLo node.tar.xz "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz"
+          echo "$NODE_SHA256  node.tar.xz" | sha256sum -c -
+          tar -xJf node.tar.xz
+          echo "$RUNNER_TEMP/node-v$NODE_VERSION-linux-x64/bin" >> "$GITHUB_PATH"
+          curl -fsSLo dart.zip "https://storage.googleapis.com/dart-archive/channels/stable/release/$DART_VERSION/sdk/dartsdk-linux-x64-release.zip"
+          echo "$DART_SHA256  dart.zip" | sha256sum -c -
+          unzip -q dart.zip
+          echo "$RUNNER_TEMP/dart-sdk/bin" >> "$GITHUB_PATH"
+
+      - name: Install
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Analyze
+        # No dependencies: pub get only writes the package config.
+        run: cd packages/sdk-dart && dart pub get --offline && dart analyze
+
+      - name: Test
+        run: pnpm test:dart
