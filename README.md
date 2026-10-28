@@ -51,6 +51,7 @@ The [getting started guide](docs/guide/getting-started.md) walks through the who
 | [Integrations](docs/guide/integrations.md) | Webhooks, Prometheus and OpenTelemetry metrics |
 | [Self-hosting](docs/guide/self-hosting.md) | Configuration, TLS, backups, security, privacy |
 | [Specification](docs/spec.md) | The model and the HTTP API |
+| [Threat model](docs/threat-model.md) | What Ripen protects, against whom, and what is left to you |
 | [Architecture decisions](docs/adr) | Why it is built this way |
 
 ## Packages

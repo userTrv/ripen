@@ -207,8 +207,10 @@ export class Store implements RipenStore {
     if (channels.length === 0) return { ok: 0, broken: 0 };
     const row = this.db
       .prepare(
-        `SELECT COALESCE(SUM(status = 'ok'), 0) AS ok, COALESCE(SUM(status = 'broken'), 0) AS broken FROM pulses
-         WHERE created_at >= ? AND (feature IS NULL OR feature = ?) AND channel IN (${placeholders(channels)})`,
+        // One "ok" and one "broken" per subscriber and day, so repeating a pulse does not add weight.
+        `SELECT COUNT(DISTINCT CASE WHEN status = 'ok' THEN subscriber_id || '|' || (created_at / ${DAY_MS}) END) AS ok,
+                COUNT(DISTINCT CASE WHEN status = 'broken' THEN subscriber_id || '|' || (created_at / ${DAY_MS}) END) AS broken
+         FROM pulses WHERE created_at >= ? AND (feature IS NULL OR feature = ?) AND channel IN (${placeholders(channels)})`,
       )
       .get(since, feature, ...channels) as { ok: number; broken: number };
     return { ok: Number(row.ok), broken: Number(row.broken) };

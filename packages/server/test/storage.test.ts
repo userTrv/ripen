@@ -18,7 +18,7 @@ for (const [name, makeStore] of [
       api({ method, path, authorization: `Bearer ${token}`, body: body === undefined ? '' : JSON.stringify(body) });
 
     it('runs a feature from off to calm on evidence', async () => {
-      assert.equal((await call('PUT', '/v1/admin/features/f1', 'a', { gate: { minPulses: 4, minDaysInChannel: 1 } })).status, 200);
+      assert.equal((await call('PUT', '/v1/admin/features/f1', 'a', { gate: { minPulses: 3, minDaysInChannel: 1 } })).status, 200);
       assert.equal((await call('POST', '/v1/admin/features/f1/promote', 'a')).status, 200);
 
       for (const id of ['e1', 'e2']) {
@@ -31,7 +31,9 @@ for (const [name, makeStore] of [
       assert.equal((early.body as any).features.f1, true);
       assert.equal((regular.body as any).features.f1, false);
 
+      await call('POST', '/v1/client/pulses', 'c', { subscriberId: 'e1', status: 'ok' });
       clock += DAY;
+      // A repeated pulse on the same day does not add weight; the next day it counts again.
       for (const id of ['e1', 'e2', 'e1', 'e2']) await call('POST', '/v1/client/pulses', 'c', { subscriberId: id, status: 'ok' });
       // Pulses about another feature do not count.
       await call('POST', '/v1/client/pulses', 'c', { subscriberId: 'e1', status: 'broken', feature: 'other' });
@@ -43,7 +45,7 @@ for (const [name, makeStore] of [
       const health = (await call('GET', '/v1/admin/features/f1/health', 'a')).body as any;
       assert.deepEqual(
         { ok: health.health.pulsesOk, broken: health.health.pulsesBroken, with: health.health.errorRateWith, without: health.health.errorRateWithout },
-        { ok: 4, broken: 0, with: 0.5, without: null },
+        { ok: 3, broken: 0, with: 0.5, without: null },
       );
       assert.equal(health.gate.pass, true, 'no consenting subscribers without the feature: no baseline');
 

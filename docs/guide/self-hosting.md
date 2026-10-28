@@ -129,7 +129,7 @@ Rebuild the image and restart the container. The server migrates the database sc
 - **Request limits**: bodies up to 64 KB, reports up to 4000 characters, errors up to 1000.
 - **Supply chain**: the server has no runtime dependencies; the image contains no npm packages.
 
-To report a vulnerability, see [SECURITY.md](../../SECURITY.md).
+The [threat model](../threat-model.md) explains each risk and who handles it. To report a vulnerability, see [SECURITY.md](../../SECURITY.md).
 
 ## Data and privacy
 

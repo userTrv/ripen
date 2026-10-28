@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows [Kee
 - `GET /metrics`: channel and feature health in the Prometheus format, for Prometheus, Grafana and the OpenTelemetry Collector.
 - User guides in `docs/guide`, package READMEs, contributing and security policies, example configuration.
 
+### Changed
+- The gate counts at most one "ok" and one "broken" pulse per subscriber per day, so a repeated pulse, or a script reusing one subscriber id, does not add weight.
+
 ### Fixed
 - The server stops promptly on `SIGTERM` instead of waiting for idle keep-alive connections.
 - A wrong `ripen.config.json` is reported with a one-line message instead of a stack trace.

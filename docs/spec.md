@@ -71,7 +71,7 @@ The server measures since the feature entered its current stage:
 | Metric | Source |
 |---|---|
 | `daysInStage` | Time since `stageSince` |
-| `pulsesOk`, `pulsesBroken` | Pulses about this feature or about the app in general, from channels that have the feature |
+| `pulsesOk`, `pulsesBroken` | Pulses about this feature or about the app in general, from channels that have the feature. Each subscriber counts at most once per UTC day for `ok` and once for `broken` |
 | `errorRateWith` | Errors per active consenting subscriber in channels that have the feature. Errors attributed to other features are left out |
 | `errorRateWithout` | The same for channels that do not have it yet |
 
