@@ -1,6 +1,6 @@
 {
   "name": "@ripen/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ripen JavaScript SDK for browsers and Node.js.",
   "keywords": [
     "ripen",

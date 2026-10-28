@@ -1,6 +1,6 @@
 {
   "name": "@ripen/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ripen command-line tool: create, promote and roll back features from CI or a terminal.",
   "keywords": [
     "ripen",

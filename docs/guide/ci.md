@@ -43,7 +43,7 @@ Where to get it:
 The action runs the bundled CLI with the runner's Node.js. It uses no other actions and installs nothing. Pin it to a full commit SHA, as you should any action:
 
 ```yaml
-- uses: userTrv/ripen@<full-commit-sha> # v0.2.0
+- uses: userTrv/ripen@<full-commit-sha> # v0.3.0
   with:
     url: ${{ vars.RIPEN_URL }}
     admin-token: ${{ secrets.RIPEN_ADMIN_TOKEN }}
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - id: ripen
-        uses: userTrv/ripen@<full-commit-sha> # v0.2.0
+        uses: userTrv/ripen@<full-commit-sha> # v0.3.0
         with:
           url: ${{ vars.RIPEN_URL }}
           admin-token: ${{ secrets.RIPEN_ADMIN_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
 ### Open a feature with the release that ships it
 
 ```yaml
-      - uses: userTrv/ripen@<full-commit-sha> # v0.2.0
+      - uses: userTrv/ripen@<full-commit-sha> # v0.3.0
         with:
           url: ${{ vars.RIPEN_URL }}
           admin-token: ${{ secrets.RIPEN_ADMIN_TOKEN }}
@@ -101,7 +101,7 @@ Run it after the deploy step: the code is live for everyone, the feature only fo
 ### Stop a deploy while a feature is unhealthy
 
 ```yaml
-      - uses: userTrv/ripen@<full-commit-sha> # v0.2.0
+      - uses: userTrv/ripen@<full-commit-sha> # v0.3.0
         with:
           url: ${{ vars.RIPEN_URL }}
           admin-token: ${{ secrets.RIPEN_ADMIN_TOKEN }}

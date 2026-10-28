@@ -1,6 +1,6 @@
 {
   "name": "@ripen/server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Self-hosted Ripen server: Node.js built-ins and SQLite, no runtime dependencies.",
   "keywords": [
     "ripen",

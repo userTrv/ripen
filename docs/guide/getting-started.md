@@ -10,7 +10,7 @@ With Docker:
 # Two random secrets. The client key ships inside your app; the admin token stays private.
 printf 'RIPEN_CLIENT_KEY=%s\nRIPEN_ADMIN_TOKEN=%s\n' "$(openssl rand -hex 24)" "$(openssl rand -hex 24)" > ripen.env
 
-docker run -d --name ripen -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ghcr.io/usertrv/ripen:0.2.0
+docker run -d --name ripen -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ghcr.io/usertrv/ripen:0.3.0
 curl http://localhost:4747/healthz        # {"ok":true}
 ```
 

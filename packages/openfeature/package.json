@@ -1,6 +1,6 @@
 {
   "name": "@ripen/openfeature",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "OpenFeature provider for Ripen: evaluate Ripen features through the OpenFeature web SDK.",
   "keywords": [
     "ripen",
