@@ -96,3 +96,13 @@ class RipenException implements Exception {
   @override
   String toString() => 'RipenException($status, $code): $message';
 }
+
+/// The request did not reach the server: no network, DNS failure, refused connection or timeout.
+class RipenNetworkException implements Exception {
+  const RipenNetworkException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'RipenNetworkException: $message';
+}

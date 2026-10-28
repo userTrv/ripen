@@ -79,4 +79,4 @@ Sparkle (appcast per channel), Squirrel.Windows and MSIX follow the same pattern
 
 - Send `appVersion` with every event, so reports and errors from beta builds are easy to tell apart in the console.
 - A pulse prompt fits naturally after an update: "Version 2.5 is installed. Is everything working?" with `<ripen-feedback>`.
-- Desktop apps are often offline. The SDK throws on network errors; catch them around `pulse`, `report` and `captureError` and retry later if you need to.
+- Desktop apps are often offline. The SDK keeps pulses, reports and errors sent without network and sends them on the next start or when the connection returns ([Offline](web.md#offline)); wrap `start()` in a `try` and fall back to `isEnabled(key, fallback)`.

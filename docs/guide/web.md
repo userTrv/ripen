@@ -22,12 +22,17 @@ const ripen = createRipen({
 | `ripen.session`, `ripen.channel`, `ripen.channels` | The current session, the person's channel, all channels with their contracts |
 | `await ripen.setChannel(id, { consent })` | Switches channel. Telemetry channels need `consent: true`, otherwise `RipenError` with `code: 'consent_required'` |
 | `await ripen.pulse('ok' \| 'broken', { feature? })` | One-tap check-in, about the app or one feature |
-| `await ripen.report(message, { feature?, context? })` | Written report; returns `{ id }`. Keep personal data out of `context` |
+| `await ripen.report(message, { feature?, context? })` | Written report; returns `{ id }`, or `{ id: null, queued: true }` when kept for later. Keep personal data out of `context` |
 | `await ripen.captureError(error, { feature? })` | Sends an error if the person consented, otherwise does nothing |
 | `ripen.captureUncaughtErrors()` | Reports uncaught errors and unhandled rejections; returns a function that stops it |
 | `ripen.onChange(listener)` | Called after every session change; returns an unsubscribe function |
+| `await ripen.flush()`, `ripen.queued` | Sends events kept offline now; how many wait |
 
-Errors from the server are thrown as `RipenError` with `status`, `code` and a readable `message`.
+Errors from the server are thrown as `RipenError` with `status`, `code` and a readable `message`. A request that never reached the server throws `RipenNetworkError`.
+
+### Offline
+
+Pulses, reports and errors that fail for lack of network do not throw: they are kept in the same storage as the subscriber id (up to 50, for 7 days) and sent, oldest first, on the next `start()`, when the browser fires `online`, or on `flush()`. The server counts them when they arrive. What the server rejects (`4xx`) is thrown at once and never kept. `start()` and `setChannel()` still throw without network, so the app can fall back to `isEnabled(key, fallback)`. Turn the queue off with `offlineQueue: false`.
 
 ### Choosing the subscriber id
 
