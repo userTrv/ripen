@@ -2,7 +2,7 @@ name: ripen
 description: >-
   Ripen client for Dart and Flutter: stability channels chosen by users,
   feature checks, one-tap pulses, reports and errors. No dependencies.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/userTrv/ripen
 homepage: https://github.com/userTrv/ripen
 issue_tracker: https://github.com/userTrv/ripen/issues

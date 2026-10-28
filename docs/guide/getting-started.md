@@ -7,19 +7,17 @@ In about fifteen minutes: run a Ripen server, put a feature behind it, let a use
 With Docker:
 
 ```bash
-git clone https://github.com/userTrv/ripen && cd ripen
-docker build -t ripen .
-
 # Two random secrets. The client key ships inside your app; the admin token stays private.
 printf 'RIPEN_CLIENT_KEY=%s\nRIPEN_ADMIN_TOKEN=%s\n' "$(openssl rand -hex 24)" "$(openssl rand -hex 24)" > ripen.env
 
-docker run -d --name ripen -p 4747:4747 -v ripen-data:/data --env-file ripen.env ripen
+docker run -d --name ripen -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ghcr.io/usertrv/ripen:0.2.0
 curl http://localhost:4747/healthz        # {"ok":true}
 ```
 
 Or from source (Node.js 22.18+ and pnpm):
 
 ```bash
+git clone https://github.com/userTrv/ripen && cd ripen
 pnpm install --frozen-lockfile
 pnpm build
 export RIPEN_CLIENT_KEY="$(openssl rand -hex 24)" RIPEN_ADMIN_TOKEN="$(openssl rand -hex 24)"
@@ -35,11 +33,12 @@ Go to <http://localhost:4747/dashboard/> and sign in with the admin token. Creat
 The same from a terminal:
 
 ```bash
-export RIPEN_URL=http://localhost:4747 RIPEN_ADMIN_TOKEN=...   # the value from ripen.env
-node action/ripen.mjs create new-editor --description "Rewritten editor"
+# The image includes the CLI; it reads the admin token from the container's environment.
+alias ripen='docker exec -e RIPEN_URL=http://127.0.0.1:4747 ripen ripen'
+ripen create new-editor --description "Rewritten editor"
 ```
 
-`action/ripen.mjs` is the CLI bundled into one file; after `pnpm build` the same tool is `node packages/cli/dist/main.js`.
+In a clone of the repository the same tool is `node action/ripen.mjs` (the CLI bundled into one file) with `RIPEN_URL` and `RIPEN_ADMIN_TOKEN` set.
 
 ## 3. Check the feature in your app
 
@@ -80,7 +79,7 @@ The picker shows each channel and what it expects. Joining `early` asks for cons
 ## 5. Release to the early channel
 
 ```bash
-node action/ripen.mjs promote new-editor        # off → early
+ripen promote new-editor        # off → early
 ```
 
 People in `early` now see the new editor; `regular` and `calm` do not. Call `ripen.captureUncaughtErrors()` in the app so errors from early subscribers who agreed are counted.
@@ -88,7 +87,7 @@ People in `early` now see the new editor; `regular` and `calm` do not. Call `rip
 ## 6. Promote on evidence
 
 ```bash
-node action/ripen.mjs health new-editor
+ripen health new-editor
 ```
 
 ```

@@ -20,10 +20,8 @@ Ripen is a self-hosted layer of stability channels for any app. Each person pick
 ## Start
 
 ```bash
-git clone https://github.com/userTrv/ripen && cd ripen
-docker build -t ripen .
 printf 'RIPEN_CLIENT_KEY=%s\nRIPEN_ADMIN_TOKEN=%s\n' "$(openssl rand -hex 24)" "$(openssl rand -hex 24)" > ripen.env
-docker run -d --name ripen -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ripen
+docker run -d --name ripen -p 127.0.0.1:4747:4747 -v ripen-data:/data --env-file ripen.env ghcr.io/usertrv/ripen:0.2.0
 ```
 
 The release console is at <http://localhost:4747/dashboard/>. In the app:
