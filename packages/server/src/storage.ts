@@ -76,6 +76,11 @@ export interface RipenStore {
    * Errors attributed to other features are left out.
    */
   errorRate(channels: string[], feature: string, since: number): number | null;
+  /**
+   * Deletes pulses, reports, errors and activity older than `before`. Subscribers,
+   * features and promotion history stay. Returns the number of deleted events.
+   */
+  purge(before: number): number;
   /** Latest reports about the feature or the app in general, newest first. */
   recentReports(channels: string[], feature: string, since: number, limit?: number): ReportView[];
 }

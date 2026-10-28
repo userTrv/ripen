@@ -230,6 +230,17 @@ export class Store implements RipenStore {
     return Number(errors.n) / Number(active.n);
   }
 
+  purge(before: number): number {
+    return this.transaction(() => {
+      let deleted = 0;
+      for (const table of ['pulses', 'reports', 'errors']) {
+        deleted += Number(this.db.prepare(`DELETE FROM ${table} WHERE created_at < ?`).run(before).changes);
+      }
+      this.db.prepare('DELETE FROM activity WHERE day < ?').run(Math.floor(before / DAY_MS));
+      return deleted;
+    });
+  }
+
   recentReports(channels: string[], feature: string, since: number, limit = 20): ReportView[] {
     if (channels.length === 0) return [];
     return this.db

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    # No third-party actions: the job runs in the same digest-pinned Node image
+    # as the Docker build (node:22.23.3-alpine, published 2026-09-23).
+    container: node:22.23.3-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        # Plain git instead of actions/checkout. The token is passed for this
+        # fetch only and is not stored in the repository config.
+        env:
+          TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+          SHA: ${{ github.sha }}
+        run: |
+          apk add --no-cache git
+          # The workspace belongs to the runner user, the container runs as root.
+          git config --global --add safe.directory "$PWD"
+          git init -q .
+          git remote add origin "$SERVER/$REPOSITORY.git"
+          auth="$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "$SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Install
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build and check the action bundle
+        run: pnpm build && node scripts/build-action.ts --check

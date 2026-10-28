@@ -117,4 +117,23 @@ describe('ripen CLI', () => {
     const result = await ripen('channels', '--json');
     assert.equal(JSON.parse(result.out)[0].id, 'early');
   });
+
+  it('promotes every ready feature and leaves the rest', async () => {
+    await ripen('create', 'ready-one');
+    await ripen('create', 'stays-off');
+    await ripen('promote', 'ready-one');
+    for (let i = 0; i < 20; i++) {
+      const sdk = createRipen({ url: env.RIPEN_URL!, clientKey: CLIENT_KEY, subscriberId: `p${i}` });
+      await sdk.setChannel('early', { consent: true });
+      await sdk.pulse('ok', { feature: 'ready-one' });
+    }
+    clock += 3 * DAY;
+    const result = await ripen('promote-ready', '--json');
+    assert.equal(result.code, 0);
+    const moves = JSON.parse(result.out) as { key: string; promoted: boolean; to: string | null }[];
+    assert.deepEqual(moves.find((m) => m.key === 'ready-one'), { key: 'ready-one', from: 'early', to: 'regular', promoted: true, failed: [] });
+    assert.equal(moves.some((m) => m.key === 'stays-off'), false, 'off features are never opened automatically');
+    const again = await ripen('promote-ready');
+    assert.match(again.out, /ready-one: stays in regular/);
+  });
 });

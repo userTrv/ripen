@@ -25,6 +25,8 @@ Commands:
   promote <key> [--force]        Move to the next channel if the gate passes
   rollback <key> [--to <stage>]  Move back one channel, or to <stage> ("off" turns it off)
   history <key>                  Every move with actor and gate checks
+  promote-ready                  Promote every feature whose gate passes (features that are
+                                 off stay off: opening the first channel is a human decision)
 
 Options:
   --actor <name>   Recorded in history (default: $GITHUB_ACTOR or $USER)
@@ -155,6 +157,29 @@ export async function run(argv: string[], env: Record<string, string | undefined
       case 'rollback': {
         const feature = await api('POST', `/v1/admin/features/${needKey()}/rollback`, { actor, ...(values.to ? { to: values.to } : {}) });
         print(feature, () => io.out(`${feature.key}: now ${feature.stage}`));
+        return 0;
+      }
+      case 'promote-ready': {
+        const features: { key: string; stage: string; nextStage: string | null }[] = await api('GET', '/v1/admin/features');
+        const results: { key: string; from: string; to: string | null; promoted: boolean; failed: string[] }[] = [];
+        for (const f of features) {
+          if (f.stage === 'off' || f.nextStage === null) continue;
+          const key = encodeURIComponent(f.key);
+          const health = await api('GET', `/v1/admin/features/${key}/health`);
+          if (health.gate?.pass) {
+            const result = await api('POST', `/v1/admin/features/${key}/promote`, { actor, force: false });
+            results.push({ key: f.key, from: f.stage, to: result.feature.stage, promoted: true, failed: [] });
+          } else {
+            const failed = (health.gate?.checks ?? []).filter((c: Check) => !c.pass).map((c: Check) => c.message);
+            results.push({ key: f.key, from: f.stage, to: null, promoted: false, failed });
+          }
+        }
+        print(results, () => {
+          if (results.length === 0) io.out('nothing to promote: every feature is off or already everywhere');
+          for (const r of results) {
+            io.out(r.promoted ? `✓ ${r.key}: ${r.from} → ${r.to}` : `· ${r.key}: stays in ${r.from} (${r.failed.join('; ')})`);
+          }
+        });
         return 0;
       }
       case 'history': {

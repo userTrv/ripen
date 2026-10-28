@@ -24,6 +24,22 @@ const server = createRipenServer(service, {
   ...(env['RIPEN_DASHBOARD_DIR'] ? { dashboardDir: env['RIPEN_DASHBOARD_DIR'] } : {}),
 });
 
+// Optional retention: events older than this many days are deleted at start and daily.
+const retentionDays = env['RIPEN_RETENTION_DAYS'];
+if (retentionDays !== undefined) {
+  const days = Number(retentionDays);
+  if (!Number.isInteger(days) || days < 1) {
+    console.error('RIPEN_RETENTION_DAYS must be a whole number of days, at least 1');
+    process.exit(1);
+  }
+  const purge = () => {
+    const deleted = service.purgeOlderThan(days);
+    if (deleted > 0) console.log(`retention: deleted ${deleted} events older than ${days} days`);
+  };
+  purge();
+  setInterval(purge, 24 * 60 * 60 * 1000).unref();
+}
+
 const port = Number(env['PORT'] ?? 4747);
 const host = env['HOST'] ?? '127.0.0.1';
 server.listen(port, host, () => {
@@ -31,12 +47,20 @@ server.listen(port, host, () => {
   if (env['RIPEN_DASHBOARD_DIR']) console.log(`dashboard on http://${host}:${port}/dashboard/`);
 });
 
+// Stop accepting connections, let requests in flight finish, drop idle keep-alive
+// connections (they would otherwise hold the shutdown open) and give up after 5 s.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, () => {
+  process.once(signal, () => {
     server.close(() => {
       store.close();
       process.exit(0);
     });
+    server.closeIdleConnections();
+    setTimeout(() => {
+      server.closeAllConnections();
+      store.close();
+      process.exit(0);
+    }, 5000).unref();
   });
 }
 
@@ -45,7 +69,12 @@ function loadConfig(path: string): RipenConfig {
     console.log(`${path} not found, using the default channels`);
     return DEFAULT_CONFIG;
   }
-  return parseConfig(JSON.parse(readFileSync(path, 'utf8')));
+  try {
+    return parseConfig(JSON.parse(readFileSync(path, 'utf8')));
+  } catch (error) {
+    console.error(`${path}: ${(error as Error).message}`);
+    process.exit(1);
+  }
 }
 
 function requireSecret(name: string): string {

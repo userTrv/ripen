@@ -148,6 +148,16 @@ export class MemoryStore implements RipenStore {
     return errors / active.size;
   }
 
+  purge(before: number): number {
+    const sizes = this.data.pulses.length + this.data.reports.length + this.data.errors.length;
+    this.data.pulses = this.data.pulses.filter((p) => p.at >= before);
+    this.data.reports = this.data.reports.filter((r) => r.created_at >= before);
+    this.data.errors = this.data.errors.filter((e) => e.at >= before);
+    const day = Math.floor(before / DAY_MS);
+    for (const [key, a] of this.data.activity) if (a.day < day) this.data.activity.delete(key);
+    return sizes - (this.data.pulses.length + this.data.reports.length + this.data.errors.length);
+  }
+
   recentReports(channels: string[], feature: string, since: number, limit = 20): ReportView[] {
     return this.data.reports
       .filter((r) => r.created_at >= since && channels.includes(r.channel) && (r.feature === null || r.feature === feature))

@@ -151,3 +151,4 @@ With `RIPEN_DASHBOARD_DIR` set, the server serves the built `@ripen/dashboard` a
 - No IP addresses or user agents are stored.
 - Errors are stored only with consent. Report text and `context` are whatever the app sends: apps should not put personal data there.
 - Ids are opaque. The SDK's generated id is random and kept in `localStorage`.
+- With `RIPEN_RETENTION_DAYS` set, pulses, reports, errors and daily activity older than that are deleted at start and then daily. Subscribers, features and promotion history are kept. A gate only looks at events since the feature entered its stage, so the retention period should be longer than the longest time a feature stays in one channel.

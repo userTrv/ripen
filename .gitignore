@@ -10,3 +10,4 @@ dist/
 *.db
 *.db-*
 apps/demo/site/
+ripen.env

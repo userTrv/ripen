@@ -2,7 +2,24 @@
   "name": "@ripen/server",
   "version": "0.1.0",
   "description": "Self-hosted Ripen server: Node.js built-ins and SQLite, no runtime dependencies.",
+  "keywords": [
+    "ripen",
+    "feature-flags",
+    "release-channels",
+    "self-hosted",
+    "sqlite"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/server#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/server"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
   "exports": {
     ".": {
@@ -17,6 +34,7 @@
     }
   },
   "files": [
+    "README.md",
     "dist"
   ],
   "bin": {
@@ -27,5 +45,11 @@
   },
   "devDependencies": {
     "@ripen/sdk": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

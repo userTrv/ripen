@@ -2,7 +2,24 @@
   "name": "@ripen/dashboard",
   "version": "0.1.0",
   "description": "Ripen release console: channels, features, gates, promotion and rollback. A web component, no dependencies.",
+  "keywords": [
+    "ripen",
+    "web-components",
+    "dashboard",
+    "feature-flags",
+    "release"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/dashboard"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
   "exports": {
     ".": {
@@ -12,7 +29,11 @@
     }
   },
   "files": [
+    "README.md",
     "dist",
     "public"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

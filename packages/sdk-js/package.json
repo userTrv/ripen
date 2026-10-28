@@ -2,8 +2,26 @@
   "name": "@ripen/sdk",
   "version": "0.1.0",
   "description": "Ripen JavaScript SDK for browsers and Node.js.",
+  "keywords": [
+    "ripen",
+    "feature-flags",
+    "release-channels",
+    "beta",
+    "feedback"
+  ],
+  "homepage": "https://github.com/userTrv/ripen/tree/main/packages/sdk-js#readme",
+  "bugs": {
+    "url": "https://github.com/userTrv/ripen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userTrv/ripen.git",
+    "directory": "packages/sdk-js"
+  },
   "license": "Apache-2.0",
+  "author": "Kirill Levin (https://usertrv.dev)",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "ripen-source": "./src/index.ts",
@@ -12,6 +30,10 @@
     }
   },
   "files": [
+    "README.md",
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
