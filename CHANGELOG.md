@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `RIPEN_RETENTION_DAYS`: deletes pulses, reports, errors and activity older than the given number of days.
 - Events and signed webhooks (`RIPEN_WEBHOOK_URL`, `RIPEN_WEBHOOK_SECRET`): `feature.promoted`, `feature.rolled_back`, `report.created`, `subscriber.demoted`. `verifyWebhook()` checks them on the receiving side.
 - `GET /metrics`: channel and feature health in the Prometheus format, for Prometheus, Grafana and the OpenTelemetry Collector.
+- Guide for desktop apps: Electron and Tauri, with update channels that follow the Ripen channel. Threat model in `docs/threat-model.md`.
 - User guides in `docs/guide`, package READMEs, contributing and security policies, example configuration.
 
 ### Changed
